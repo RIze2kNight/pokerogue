@@ -8,29 +8,8 @@
 +  REGEN_POKEMON: "REGEN_POKEMON", //Done
 
   PANDEMIC_MODE: "PANDEMIC_MODE", //RIze2kNight Mod
+*
 
-#src/system/settings/mod-settings.ts
-+  {
-+    key: SettingKeys.REGEN_POKEMON,
-+    label: "Regen Complete Pokémon",
-+    options: [
-+      {
-+        value: "25",
-+        label: "25%"
-+      },
-+      {
-+        value: "50",
-+        label: "50%"
-+      },
-+      {
-+        value: "75",
-+        label: "75%"
-+      },
-+      {
-+        value: "100",
-+        label: "100%"
-+      },
-+    ],
 +    default: 0,
 +    type: null
 +  },
@@ -42,8 +21,8 @@
     requireReload: true,
     type: null
   },
+*
 
-#src/system/settings/mod-settings.ts
 +  case SettingKeys.REGEN_POKEMON:
 +    scene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
 +    break;
