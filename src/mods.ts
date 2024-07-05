@@ -276,11 +276,12 @@ export class Mods {
     pokemonCandyCountText: Phaser.GameObjects.Text,
     rarity: integer
   ) {
+
+    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockShinyPrice(rarity, lastSpecies);
     while (rarity > 0) {
       scene.gameData.dexData[lastSpecies.speciesId].caughtAttr |= this.getShinyRarity(rarity);
       rarity--;
     }
-    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockShinyPrice(rarity, lastSpecies);
     pokemonCandyCountText.setText(`x${scene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
 
     uiHandler.setSpecies(lastSpecies);
