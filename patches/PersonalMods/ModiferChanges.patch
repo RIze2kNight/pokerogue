@@ -1,0 +1,46 @@
+~rize2knight-ModiferChanges
+#src\locales\en\modifier-type.ts
+-    "AMULET_COIN": { name: "Amulet Coin", description: "Increases money rewards by 20%." },
+-    "GOLDEN_PUNCH": { name: "Golden Punch", description: "Grants 50% of direct damage inflicted as money." },
+    "AMULET_COIN": { name: "Amulet Coin", description: "Increases money rewards by 100%." },
+    "GOLDEN_PUNCH": { name: "Golden Punch", description: "Grants 200% of direct damage inflicted as money." },
+
+#src\locales\en\modifier-type.ts
+-    "BERRY_POUCH": { name: "Berry Pouch", description: "Adds a 30% chance that a used berry will not be consumed." },
+    "BERRY_POUCH": { name: "Berry Pouch", description: "Adds a 34% chance that a used berry will not be consumed." },
+
+#src\modifier\modifier.ts
+-      (args[1] as Utils.BooleanHolder).value = (args[0] as Pokemon).randSeedInt(10) < this.getStackCount() * 3;
+
+//RIze2kNight PersonalMods (BerryPreserve 100%)
+(args[1] as Utils.BooleanHolder).value = (args[0] as Pokemon).randSeedInt(10) < this.getStackCount() * 3.4;
+*
+
+-    (args[0] as Utils.IntegerHolder).value += Math.floor((args[0] as Utils.IntegerHolder).value * 0.2 * this.getStackCount());
+    
+    //RIze2kNight PersonalMods (100% AmuletCoin)
+    (args[0] as Utils.IntegerHolder).value += Math.floor((args[0] as Utils.IntegerHolder).value * 1.0 * this.getStackCount());
+*
+
+-    const moneyAmount = new Utils.IntegerHolder(Math.floor((args[1] as Utils.IntegerHolder).value * (0.5 * this.getStackCount())));
+
+    //RIze2kNight PersonalMods (200% GoldenPunch)
+    const moneyAmount = new Utils.IntegerHolder(Math.floor((args[1] as Utils.IntegerHolder).value * (2.0 * this.getStackCount())));
+
+#src\modifier\modifier-type.ts
+-    new WeightedModifierType(modifierTypes.LOCK_CAPSULE, 3),
+        
+    //RIze2kNight PersonalMods (Higher Weight LockCapsule)
+    new WeightedModifierType(modifierTypes.LOCK_CAPSULE, 20),
+*
+
+-    new WeightedModifierType(modifierTypes.AMULET_COIN, skipInLastClassicWaveOrDefault(3)),
+    
+    //RIze2kNight PersonalMods (Higher Weight AmuletCoin)
+    new WeightedModifierType(modifierTypes.AMULET_COIN, skipInLastClassicWaveOrDefault(15)),
+*
+
+-    new WeightedModifierType(modifierTypes.GOLDEN_PUNCH, skipInLastClassicWaveOrDefault(2)),
+
+    //RIze2kNight PersonalMods (Higher Weight GoldenPunch)
+    new WeightedModifierType(modifierTypes.GOLDEN_PUNCH, skipInLastClassicWaveOrDefault(15)),
