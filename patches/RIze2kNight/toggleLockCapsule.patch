@@ -30,9 +30,5 @@
     break;
 
 #src\ui\modifier-select-ui-handler.ts
-+import { allMoves } from "../data/move";
-import { Mods } from "./mods";
-*
-
 -    const canLockRarities = !!this.scene.findModifier(m => m instanceof LockModifierTiersModifier);
     const canLockRarities = this.scene.mods.toggleLockCapsule? true : !!this.scene.findModifier(m => m instanceof LockModifierTiersModifier);
