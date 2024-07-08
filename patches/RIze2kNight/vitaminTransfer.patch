@@ -103,3 +103,15 @@ export const vitaminTransfer = (c: boolean) => {
   getTransferrable(_withinParty: boolean): boolean {
     return vitaminTransfer? _withinParty : false;
   }
+
+#src/ui/party-ui-handler.ts
+-import { PokemonBaseStatModifier, PokemonFormChangeItemModifier, PokemonHeldItemModifier, SwitchEffectTransferModifier } from "../modifier/modifier";
+import { PokemonBaseStatModifier, PokemonFormChangeItemModifier, PokemonHeldItemModifier, SwitchEffectTransferModifier, vitaminTransfer } from "../modifier/modifier";
+*
+
+-        if (itemModifier === undefined || itemModifier instanceof PokemonBaseStatModifier) {
+        if (itemModifier === undefined || (itemModifier instanceof PokemonBaseStatModifier && !vitaminTransfer)) {
+*
+
+-        if (this.transferQuantitiesMax[option] === itemModifier.getMaxHeldItemCount(undefined)) {
+        if (this.transferQuantitiesMax[option] === itemModifier.getMaxHeldItemCount(itemModifier instanceof PokemonBaseStatModifier? pokemon : undefined)) {  
