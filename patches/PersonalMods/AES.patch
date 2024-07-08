@@ -2,9 +2,9 @@
 #src\system\game-data.ts
 -        const encryptedData = AES.encrypt(dataStr, saveKey);
         const encryptedData = dataStr;
-        // AES.encrypt(dataStr, saveKey);
+        // const encryptedData = AES.encrypt(dataStr, saveKey);
 
 #src\system\game-data.ts
 -            let dataStr = AES.decrypt(e.target.result.toString(), saveKey).toString(enc.Utf8);
             let dataStr = e.target.result.toString();
-            // AES.decrypt(e.target.result.toString(), saveKey).toString(enc.Utf8);
+            // let dataStr = AES.decrypt(e.target.result.toString(), saveKey).toString(enc.Utf8);
