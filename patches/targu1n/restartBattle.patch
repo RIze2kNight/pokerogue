@@ -1,0 +1,22 @@
+~targu1n-Restart
+#src/ui-inputs.ts
++import ModSettingsUiHandler from "./ui/settings/mod-settings-ui-handler";
+import CommandUiHandler from "#app/ui/command-ui-handler";
+import FightUiHandler from "#app/ui/fight-ui-handler";
+
+#src/ui-inputs.ts
++    } else if (button === Button.V) {
++      this.buttonInfo(true);
+-    }
+    } else if (button === Button.CYCLE_SHINY) {
+      this.restartBattle();
+    }
+  }
+
+  restartBattle() {
+    const whitelist = [CommandUiHandler, FightUiHandler];
+    const uiHandler = this.scene.ui?.getHandler();
+
+    if (whitelist.some(handler => uiHandler instanceof handler)) {
+      this.scene.mods.restartBattle(this.scene);
+    }

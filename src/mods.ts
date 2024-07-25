@@ -1,24 +1,64 @@
-import { PlayerPokemon, PokemonMove } from "./field/pokemon";
-import BattleScene, { starterColors } from "./battle-scene";
-import { LevelMoves } from "./data/pokemon-level-moves";
-import { Moves } from "./enums/moves";
-import { speciesEggMoves } from "./data/egg-moves";
-import PokemonSpecies, { getPokemonSpecies, speciesStarters } from "./data/pokemon-species";
-import { achvs } from "./system/achv";
-import StarterSelectUiHandler from "./ui/starter-select-ui-handler";
+import Pokemon, {PlayerPokemon, PokemonMove} from "#app/field/pokemon";
+import BattleScene, {starterColors} from "#app/battle-scene";
+import {LevelMoves} from "#app/data/pokemon-level-moves";
+import {Moves} from "#enums/moves";
+import {speciesEggMoves} from "./data/egg-moves";
+import PokemonSpecies, {getPokemonSpecies, SpeciesFormKey, speciesStarters} from "#app/data/pokemon-species";
+import {achvs} from "#app/system/achv";
+import StarterSelectUiHandler from "#app/ui/starter-select-ui-handler";
 import i18next from "i18next";
-import UI, { Mode } from "./ui/ui";
-import { allMoves } from "./data/move";
-import { AbilityAttr, DexAttr } from "./system/game-data";
-import { allAbilities } from "./data/ability";
-import { Stat, getStatName } from "./data/pokemon-stat";
-import { getNatureName } from "./data/nature";
+import UI, {Mode} from "#app/ui/ui";
+import {allMoves} from "#app/data/move";
+import {AbilityAttr, DexAttr} from "#app/system/game-data";
+import {allAbilities} from "#app/data/ability";
+import {getStatName, Stat} from "#app/data/pokemon-stat";
+import {getNatureName, Nature} from "#app/data/nature";
 import * as Utils from "./utils";
-import { pokemonFormChanges } from "./data/pokemon-forms";
-import { Species } from "./enums/species";
-import { WeatherType } from "./data/weather";
-import { TerrainType } from "./data/terrain";
-
+import {pokemonFormChanges, SpeciesFormChangeItemTrigger} from "#app/data/pokemon-forms";
+import {Species} from "#enums/species";
+import {WeatherType} from "#app/data/weather";
+import {TerrainType} from "#app/data/terrain";
+import {
+  AllPokemonLevelIncrementModifierType,
+  AttackTypeBoosterModifierType,
+  BerryModifierType,
+  DoubleBattleChanceBoosterModifierType,
+  EvolutionItemModifierType,
+  ExpBoosterModifierType,
+  FormChangeItemModifierType,
+  FusePokemonModifierType,
+  ModifierType,
+  ModifierTypeOption,
+  modifierTypes,
+  MoneyRewardModifierType,
+  PokemonAllMovePpRestoreModifierType,
+  PokemonBaseStatBoosterModifierType,
+  PokemonExpBoosterModifierType,
+  PokemonHeldItemModifierType,
+  PokemonHpRestoreModifierType,
+  PokemonLevelIncrementModifierType,
+  PokemonModifierType,
+  PokemonMoveModifierType,
+  PokemonNatureChangeModifierType,
+  PokemonPpRestoreModifierType,
+  PokemonPpUpModifierType,
+  PokemonReviveModifierType,
+  PokemonStatusHealModifierType,
+  RememberMoveModifierType,
+  SpeciesStatBoosterItem,
+  SpeciesStatBoosterModifierType,
+  TempBattleStatBoosterModifierType,
+  TerastallizeModifierType,
+  TmModifierType
+} from "#app/modifier/modifier-type";
+import {EvolutionItem, pokemonEvolutions} from "#app/data/pokemon-evolutions";
+import * as Modifiers from "#app/modifier/modifier";
+import {Type} from "#app/data/type";
+import {BerryType} from "#enums/berry-type";
+import {TempBattleStat} from "#app/data/temp-battle-stat";
+import {PartyOption, PartyUiMode} from "#app/ui/party-ui-handler";
+import {BattleType} from "#app/battle";
+import {CheckSwitchPhase, EncounterPhase, SummonPhase} from "#app/phases";
 
 export class Mods {
 
@@ -111,6 +151,7 @@ export class Mods {
       );
     });
   }
+
   private revealHatchSprite(
     scene: BattleScene,
     pokemon: PlayerPokemon,
@@ -176,6 +217,7 @@ export class Mods {
       yOffset: 47,
     });
   }
+
   protected unlockEggMove(
     scene: BattleScene,
     ui: UI,
@@ -198,12 +240,14 @@ export class Mods {
     ui.setMode(Mode.STARTER_SELECT);
     return true;
   }
+
   protected unlockEggMovePrice(index: integer, species: PokemonSpecies): integer {
     const baseCost = speciesStarters[species.speciesId] > 5 ? 3 : speciesStarters[species.speciesId] > 3 ? 4 : 5;
     const rareMoveAddition = index > 2 ? 1 : 0;
 
     return Math.round((baseCost + rareMoveAddition) * this.candyCostMultiplier);
   }
+
   getEggMoveName(species: PokemonSpecies, index: integer) {
     const hasEggMoves = species && speciesEggMoves.hasOwnProperty(species.speciesId);
     const eggMove = hasEggMoves ? allMoves[speciesEggMoves[species.speciesId][index]] : null;
@@ -252,6 +296,7 @@ export class Mods {
       yOffset: 47,
     });
   }
+
   protected unlockShiny(
     scene: BattleScene,
     ui: UI,
@@ -260,7 +305,6 @@ export class Mods {
     pokemonCandyCountText: Phaser.GameObjects.Text,
     rarity: integer
   ) {
-
     scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockShinyPrice(rarity, lastSpecies);
     while (rarity > 0) {
       scene.gameData.dexData[lastSpecies.speciesId].caughtAttr |= this.getShinyRarity(rarity);
@@ -280,6 +324,7 @@ export class Mods {
     ui.setMode(Mode.STARTER_SELECT);
     return true;
   }
+
   protected unlockShinyPrice(rarity: integer, species: PokemonSpecies): integer {
     const basePokemonValue = speciesStarters[species.speciesId] > 3 ? speciesStarters[species.speciesId] + 1 : speciesStarters[species.speciesId];
 
@@ -287,6 +332,7 @@ export class Mods {
 
     return Math.round(baseCost * ((1 + rarity) / 2)) * this.candyCostMultiplier;
   }
+
   protected getShinyRarity(rarity: integer): bigint {
     if (rarity === 3) {
       return DexAttr.VARIANT_3;
@@ -296,6 +342,7 @@ export class Mods {
     }
     return DexAttr.SHINY;
   }
+
   protected getShinyRarityName(rarity: integer): String {
     if (rarity === 3) {
       return "epic shiny";
@@ -356,6 +403,7 @@ export class Mods {
       yOffset: 47,
     });
   }
+
   protected unlockAbility(
     scene: BattleScene,
     ui: UI,
@@ -381,6 +429,7 @@ export class Mods {
     ui.setMode(Mode.STARTER_SELECT);
     return true;
   }
+
   protected unlockAbilityPrice(abilityIndex: integer, species: PokemonSpecies): integer {
     const basePokemonValue = speciesStarters[species.speciesId];
     const isHA = abilityIndex === 4 ? 1 : 0;
@@ -389,10 +438,12 @@ export class Mods {
 
     return Math.ceil(baseCost * (1 + isHA)) * this.candyCostMultiplier;
   }
+
   getAbilityName(selectedAbilityIndex: integer, species: PokemonSpecies): String {
     const abilityId = selectedAbilityIndex === 1 ? species.ability1 : selectedAbilityIndex === 2 ? species.ability2 : species.abilityHidden;
     return allAbilities[abilityId].name;
   }
+
   getAllAbilityAttr(lastSpecies: PokemonSpecies): number[] {
     const allAbilityAttr: number[] = [
       AbilityAttr.ABILITY_1,
@@ -410,7 +461,6 @@ export class Mods {
 
     return allAbilityAttr.every((attr) => unlockedAbilityAttr.includes(attr));
   }
-
 
   /**
    * IV improvement store
@@ -453,6 +503,7 @@ export class Mods {
       yOffset: 47,
     });
   }
+
   protected improveIV(
     scene: BattleScene,
     ui: BattleScene["ui"],
@@ -481,13 +532,14 @@ export class Mods {
     ui.setMode(Mode.STARTER_SELECT);
     return true;
   }
+
   protected improveIVPrice(species: PokemonSpecies, modifier?: number): integer {
     return Math.round((speciesStarters[species.speciesId] > 5 ? 3 : speciesStarters[species.speciesId] > 3 ? 4 : 5) * this.candyCostMultiplier);
   }
+
   protected getStatName(statIndex: integer): String {
     return getStatName(statIndex as Stat);
   }
-
 
   /**
    * Nature unlock store
@@ -509,30 +561,13 @@ export class Mods {
               this.unlockNature(scene, ui, lastSpecies, uiHandler, pokemonCandyCountText, nature);
             }
             return false;
-          },
-          item: "candy",
-          itemArgs: starterColors[lastSpecies.speciesId],
+          }
         });
       }
     }
-
-    const chunkSize = 8;
-    const chunkedOptions: any[][] = [];
-    for (let i = 0; i < options.length; i += chunkSize) {
-      const chunk = options.slice(i, i + chunkSize);
-      if (i + chunkSize < options.length) {
-        chunk.push({
-          label: "Next",
-          handler: () => {
-            this.showOptions(ui, chunkedOptions[(i/chunkSize)+1]);
-          },
-        });
-      }
-      chunkedOptions.push(chunk);
-    }
-
-    this.showOptions(ui, chunkedOptions[0]);
+    this.showStarterSelectOptions(options, ui);
   }
+
   protected unlockNature(
     scene: BattleScene,
     ui: UI,
@@ -558,27 +593,15 @@ export class Mods {
     ui.setMode(Mode.STARTER_SELECT);
     return true;
   }
-  protected showOptions(ui: UI, options: any[]) {
-    options.push({
-      label: i18next.t("menu:cancel"),
-      handler: () => {
-        ui.setMode(Mode.STARTER_SELECT);
-        return true;
-      },
-    });
-    ui.setMode(Mode.STARTER_SELECT).then(() => ui.setModeWithoutClear(Mode.OPTION_SELECT, {
-      options: options,
-      yOffset: 47,
-    }));
-  }
+
   protected unlockNaturePrice(species: PokemonSpecies): integer {
     return Math.round((speciesStarters[species.speciesId] > 5 ? 6 : speciesStarters[species.speciesId] > 3 ? 8 : 10) * this.candyCostMultiplier);
   }
+
   hasAllNatures(scene: BattleScene, lastSpecies: PokemonSpecies): boolean {
     const allNatures = (1 << 26) - 2; // = 25 bits set to 1
     return (scene.gameData.dexData[lastSpecies.speciesId].natureAttr & allNatures) === allNatures;
   }
-
 
   /*
   * Regen Completed Pokemon
@@ -618,7 +641,7 @@ export class Mods {
     const maxAttempts = 200;
 
     async function generateMon() {
-      for (let loop=0; loop < maxAttempts; loop++) {
+      for (let loop = 0; loop < maxAttempts; loop++) {
         const randomGenIndex = Utils.randInt(8, 0);
         const randomCursorIndex = Utils.randInt(80, 0);
         const species = genSpecies[randomGenIndex][randomCursorIndex];
@@ -628,7 +651,7 @@ export class Mods {
         }
 
         console.log("Loop:" + loop);
-        if (!species ||!handler.tryUpdateValue(scene.gameData.getSpeciesStarterValue(species.speciesId))) {
+        if (!species || !handler.tryUpdateValue(scene.gameData.getSpeciesStarterValue(species.speciesId))) {
           continue;
         }
         handler.setGen(randomGenIndex);
@@ -642,10 +665,10 @@ export class Mods {
   }
 
   /**
-     * Weather UI
-     */
+   * Weather UI
+   */
   updateWeatherText(scene: BattleScene) {
-    console.log("Weather: "+  scene.arena?.weather?.weatherType);
+    console.log("Weather: " + scene.arena?.weather?.weatherType);
     if (scene.arena?.weather?.weatherType === undefined || scene.arena?.weather?.weatherType === WeatherType.NONE) {
       scene.weatherText.setText("Clear");
       scene.weatherText.setVisible(false);
@@ -658,6 +681,7 @@ export class Mods {
       scene.weatherText.setVisible(true);
     }
   }
+
   getWeatherName(weatherType: WeatherType): String {
     switch (weatherType) {
     case WeatherType.NONE:
@@ -684,7 +708,7 @@ export class Mods {
   }
 
   updateTerrainText(scene: BattleScene) {
-    console.log("Terrain: "+  scene.arena?.terrain?.terrainType);
+    console.log("Terrain: " + scene.arena?.terrain?.terrainType);
     if (scene.arena?.terrain?.terrainType === undefined || scene.arena?.terrain?.terrainType === TerrainType.NONE) {
       scene.terrainText.setVisible(false);
     } else {
@@ -698,6 +722,7 @@ export class Mods {
       scene.terrainText.setVisible(true);
     }
   }
+
   getTerrainName(terrainType: TerrainType): String {
     switch (terrainType) {
     case TerrainType.ELECTRIC:
@@ -711,5 +736,392 @@ export class Mods {
     default:
       return "No Terrain";
     }
+  }
+
+  /**
+   * Cheat Menu
+   */
+  showCheatMenu(scene: BattleScene, isPlayer: boolean, typeOptions: ModifierTypeOption[], modifierSelectCallback, rerollCost: number, party: Pokemon[]) {
+    const exit = () => scene.ui.setMode(Mode.MODIFIER_SELECT, isPlayer, typeOptions, modifierSelectCallback, rerollCost);
+    const sceneSwap = (innerOptions) => exit().then(() => {
+      scene.ui.setModeWithoutClear(Mode.OPTION_SELECT, {
+        options: innerOptions,
+        maxOptions: 8,
+        yOffset: 47,
+      });
+    });
+
+    const modifierCategories: Promise<ItemCategory[]> = this.createModifierCategories(party);
+    modifierCategories.then((categories: ItemCategory[]) => {
+      this.createCheatOptions(categories, sceneSwap, exit, exit, scene);
+    });
+  }
+
+  private createCheatOptions(categories: any[], sceneSwap: Function, exit: Function, cancelFunction: Function, scene: BattleScene) {
+    const options = [];
+
+    const nextCancelFunction = () => sceneSwap(options);
+
+    for (const item of categories) {
+      if (item instanceof ItemCategory) {
+        options.push({
+          label: item.categoryName,
+          handler: () => this.createCheatOptions(item.array, sceneSwap, exit, nextCancelFunction, scene)
+        });
+      } else {
+        options.push({
+          label: item.name,
+          handler: () => {
+            exit();
+            this.applyModifierType(item as ModifierType, scene, nextCancelFunction);
+          }
+        });
+      }
+    }
+    options.push({
+      label: i18next.t("menu:cancel"),
+      handler: cancelFunction
+    });
+
+    sceneSwap(options);
+  }
+
+  private async createModifierCategories(party: Pokemon[]): Promise<ItemCategory[]> {
+
+    //Import dynamically to ensure mods work without cheat menu module loaded
+    let AddPokeballModifierType: any;
+    let AddVoucherModifierType: any;
+    let AllPokemonFullReviveModifierType: any;
+    let SpeciesStatBoosterModifierTypeGenerator: any;
+    try {
+      ({AddPokeballModifierType} = await import("./modifier/modifier-type"));
+      ({AddVoucherModifierType } = await import("./modifier/modifier-type"));
+      ({AllPokemonFullReviveModifierType} = await import("./modifier/modifier-type"));
+      ({SpeciesStatBoosterModifierTypeGenerator } = await import("./modifier/modifier-type"));
+    } catch (e) {
+      console.log("Error importing files from cheat menu.");
+      return null;
+    }
+
+    const allModifierTypes = Object.values(modifierTypes).map(fn => fn()).filter(modifier => modifier.localeKey !== null);
+
+    //Healing
+    const healingItems = new ItemCategory("Healing", [
+      new ItemCategory("HP Healing", [
+        ...allModifierTypes.filter(modifier =>
+          [PokemonHpRestoreModifierType].some(type => modifier instanceof type))]),
+      new ItemCategory("PP Restoring", [
+        ...allModifierTypes.filter(modifier =>
+          [PokemonPpRestoreModifierType, PokemonAllMovePpRestoreModifierType].some(type => modifier instanceof type)),
+        ...allModifierTypes.filter(modifier =>
+          [PokemonMoveModifierType].some(type => modifier instanceof type))]),
+      new ItemCategory("Revives", [
+        ...allModifierTypes.filter(modifier =>
+          [PokemonReviveModifierType, AllPokemonFullReviveModifierType].some(type => modifier instanceof type))]),
+      new ItemCategory("Status Healing", [
+        ...allModifierTypes.filter(modifier =>
+          [PokemonStatusHealModifierType].some(type => modifier instanceof type))])]);
+
+    //Pokeballs
+    const pokeballs = new ItemCategory("Pokeballs", [
+      ...allModifierTypes.filter(modifier =>
+        [AddPokeballModifierType].some(type => modifier instanceof type))]);
+
+    //Lure
+    const lures = new ItemCategory("Lures", [
+      ...allModifierTypes.filter(modifier =>
+        [DoubleBattleChanceBoosterModifierType].some(type => modifier instanceof type))]);
+
+    //Misc
+    const miscConsumables = new ItemCategory("Misc", [
+      ...allModifierTypes.filter(modifier =>
+        [FusePokemonModifierType].some(type => modifier instanceof type)),
+      ...allModifierTypes.filter(modifier =>
+        [RememberMoveModifierType].some(type => modifier instanceof type))]);
+
+    //Exp
+    const expItems = new ItemCategory("Exp Items", [
+      ...allModifierTypes.filter(modifier =>
+        [ExpBoosterModifierType, PokemonExpBoosterModifierType].some(type => modifier instanceof type)),
+      ...allModifierTypes.filter(modifier =>
+        [PokemonLevelIncrementModifierType, AllPokemonLevelIncrementModifierType].some(type => modifier instanceof type))]);
+
+    //Voucher
+    const vouchers = new ItemCategory("Vouchers", [
+      ...allModifierTypes.filter(modifier =>
+        [AddVoucherModifierType].some(type => modifier instanceof type))]);
+
+    //Money
+    const moneyItems = new ItemCategory("Money Items", [
+      ...allModifierTypes.filter(modifier =>
+        [MoneyRewardModifierType].some(type => modifier instanceof type))]);
+
+    //Misc
+    const remaining = this.removeDuplicateModifierTypes(
+      allModifierTypes, ItemCategory.combineToArray([healingItems, pokeballs, lures, miscConsumables, expItems, vouchers, moneyItems]));
+    const otherHeldItems = new ItemCategory("Misc Held Items", [
+      ...remaining.filter(modifier => modifier instanceof PokemonHeldItemModifierType)]);
+    const globalMisc = new ItemCategory("Misc Global Items", [
+      ...this.removeDuplicateModifierTypes(remaining, otherHeldItems.array).filter(modifier => !(modifier instanceof TempBattleStatBoosterModifierType))]);
+
+    const tms = new ItemCategory("TMs (learned next battle)", this.generateTMs(party));
+    const formChangeItems = new ItemCategory("Evolution", [
+      ...this.generateEvolutionItems(party), ...this.generateFormChangeItems(party)]);
+    const teraItems = new ItemCategory("Tera Shards", this.generateTeraShards());
+    const berries = new ItemCategory("Berries", this.generateBerries());
+    const natureChangeItems = new ItemCategory("Nature Mints", this.generateMints());
+    const statBoosters = new ItemCategory("Stat Boosters", [
+      new ItemCategory("Base Stats", this.generateBaseStatBoosters()),
+      new ItemCategory("Temporary", this.generateTempStatBoosters()),
+      new ItemCategory("Species Specific", this.generateSpeciesStatBoosters(party, SpeciesStatBoosterModifierTypeGenerator))
+    ]);
+    const attackTypeBoosters = new ItemCategory("Type Boosters", this.generateAttackTypeBooster());
+
+    //Major Categories
+    const pokemonItems = new ItemCategory("Pokemon Items", [
+      otherHeldItems, healingItems, miscConsumables, expItems, tms, formChangeItems,
+      berries, statBoosters, attackTypeBoosters, natureChangeItems, teraItems
+    ]);
+    const globalItems = new ItemCategory("Global Items", [
+      globalMisc, pokeballs, lures, vouchers, moneyItems]);
+
+    return [globalItems, pokemonItems];
+  }
+
+  private generateEvolutionItems(party: Pokemon[]): EvolutionItemModifierType[] {
+    //from modifier-type.ts
+    const evolutionItemPool = [
+      party.filter(p => pokemonEvolutions.hasOwnProperty(p.species.speciesId)).map(p => {
+        const evolutions = pokemonEvolutions[p.species.speciesId];
+        return evolutions.filter(e => e.item !== EvolutionItem.NONE && (e.evoFormKey === null || (e.preFormKey || "") === p.getFormKey()) && (!e.condition || e.condition.predicate(p)));
+      }).flat(),
+      party.filter(p => p.isFusion() && pokemonEvolutions.hasOwnProperty(p.fusionSpecies.speciesId)).map(p => {
+        const evolutions = pokemonEvolutions[p.fusionSpecies.speciesId];
+        return evolutions.filter(e => e.item !== EvolutionItem.NONE && (e.evoFormKey === null || (e.preFormKey || "") === p.getFusionFormKey()) && (!e.condition || e.condition.predicate(p)));
+      }).flat()
+    ].flat().flatMap(e => e.item);
+
+    const evolutionModifiers = evolutionItemPool.map(item => new EvolutionItemModifierType(item));
+
+    return evolutionModifiers;
+  }
+
+  private generateTMs(party: Pokemon[]): TmModifierType[] {
+    const movesPerPoke = party.map(pokemon => (pokemon as PlayerPokemon).compatibleTms.filter(tm => !pokemon.moveset.find(move => move.moveId === tm)));
+    const tmModifiers = [...new Set(movesPerPoke.flat())].map(move => new TmModifierType(move));
+    return tmModifiers;
+  }
+
+  private generateFormChangeItems(party: Pokemon[]): FormChangeItemModifierType[] {
+    //from modifier-type.ts
+    const formChangeItemPool = party.filter(p => pokemonFormChanges.hasOwnProperty(p.species.speciesId)).map(p => {
+      const formChanges = pokemonFormChanges[p.species.speciesId];
+      return formChanges.filter(fc => ((fc.formKey.indexOf(SpeciesFormKey.MEGA) === -1 && fc.formKey.indexOf(SpeciesFormKey.PRIMAL) === -1) || party[0].scene.getModifiers(Modifiers.MegaEvolutionAccessModifier).length)
+        && ((fc.formKey.indexOf(SpeciesFormKey.GIGANTAMAX) === -1 && fc.formKey.indexOf(SpeciesFormKey.ETERNAMAX) === -1) || party[0].scene.getModifiers(Modifiers.GigantamaxAccessModifier).length))
+        .map(fc => fc.findTrigger(SpeciesFormChangeItemTrigger) as SpeciesFormChangeItemTrigger)
+        .filter(t => t && t.active && !p.scene.findModifier(m => m instanceof Modifiers.PokemonFormChangeItemModifier && m.pokemonId === p.id && m.formChangeItem === t.item));
+    }).flat().flatMap(fc => fc.item);
+
+    return formChangeItemPool.map(item => new FormChangeItemModifierType(item));
+  }
+
+  private generateTeraShards(): TerastallizeModifierType[] {
+    const typeCount = Utils.getEnumValues(Type).length - 1;
+    return Array.from({length: typeCount}, (_, i) => i).map(type => new TerastallizeModifierType(type as Type));
+  }
+
+  private generateBerries(): BerryModifierType[] {
+    const berryCount = Utils.getEnumValues(BerryType).length;
+    return Array.from({length: berryCount}, (_, i) => i).map(berry => new BerryModifierType(berry as BerryType));
+  }
+
+  private generateMints(): PokemonNatureChangeModifierType[] {
+    const natureCount = Utils.getEnumValues(Nature).length;
+    return Array.from({length: natureCount}, (_, i) => i).map(nature => new PokemonNatureChangeModifierType(nature as Nature));
+  }
+
+  private generateBaseStatBoosters(): PokemonBaseStatBoosterModifierType[] {
+    const baseStatCount = Utils.getEnumValues(Stat).length;
+    return Array.from({length: baseStatCount}, (_, i) => i).map(stat => new PokemonBaseStatBoosterModifierType(this.getBaseStatBoosterItemName(stat as Stat), stat as Stat));
+  }
+
+  private generateTempStatBoosters(): TempBattleStatBoosterModifierType[] {
+    const baseStatCount = Utils.getEnumValues(Stat).length + 1; //+1 for crit
+    return Array.from({length: baseStatCount}, (_, i) => i).map(stat => new TempBattleStatBoosterModifierType(stat as TempBattleStat));
+  }
+
+  private generateSpeciesStatBoosters(party: Pokemon[], SpeciesStatBoosterModifierTypeGenerator: any): SpeciesStatBoosterModifierType[] {
+    const keys = Object.keys(SpeciesStatBoosterModifierTypeGenerator.items);
+    const values = Object.values(SpeciesStatBoosterModifierTypeGenerator.items).map(value => (value as typeof SpeciesStatBoosterModifierTypeGenerator).species);
+
+    let output: SpeciesStatBoosterModifierType[] = [];
+
+    for (const pokemon of party) {
+      for (const index in values) {
+        if (values[index].includes(pokemon.getSpeciesForm(true).speciesId)) {
+          output = [new SpeciesStatBoosterModifierType(keys[index] as SpeciesStatBoosterItem), ...output];
+        } else if (values[index].includes(Species.PIKACHU) && pokemon.getMoveset(true).some(move => move.moveId === Moves.FLING)) {
+          output = [new SpeciesStatBoosterModifierType(keys[index] as SpeciesStatBoosterItem), ...output];
+        }
+      }
+    }
+
+    return [...new Set(output)];
+  }
+
+  private generateAttackTypeBooster(): AttackTypeBoosterModifierType[] {
+    const typeCount = Utils.getEnumValues(Type).length - 2; //-2 to remove stellar
+    return Array.from({length: typeCount}, (_, i) => i).map(type => new AttackTypeBoosterModifierType(type as Type, 20));
+  }
+
+  private getBaseStatBoosterItemName(stat: Stat) {
+    switch (stat) {
+    case Stat.HP:
+      return "HP Up";
+    case Stat.ATK:
+      return "Protein";
+    case Stat.DEF:
+      return "Iron";
+    case Stat.SPATK:
+      return "Calcium";
+    case Stat.SPDEF:
+      return "Zinc";
+    case Stat.SPD:
+      return "Carbos";
+    }
+  }
+
+  private removeDuplicateModifierTypes(allModifierTypes: ModifierType[], ...modifierTypes: ModifierType[][]): ModifierType[] {
+    return allModifierTypes.filter(modifier => !modifierTypes.some(arr => arr.includes(modifier)));
+  }
+
+  protected showStarterSelectOptions(options: any[], ui: UI) {
+    const cancelHandler = () => ui.setMode(Mode.STARTER_SELECT);
+    const sceneSwap = (newOptions: any[]) => ui.setMode(Mode.STARTER_SELECT).then(() =>
+      ui.setModeWithoutClear(Mode.OPTION_SELECT, {
+        options: newOptions,
+        maxOptions: 8,
+        yOffset: 47,
+      }));
+
+    this.showOptions(options, cancelHandler, sceneSwap);
+  }
+
+  protected showOptions(options: any[], cancelHandler: () => void, sceneSwap: (options: any[]) => void) {
+    options.push({
+      label: i18next.t("menu:cancel"),
+      handler: cancelHandler
+    });
+    sceneSwap(options);
+  }
+
+  protected applyModifierType(modifierType: ModifierType, scene: BattleScene, cancelFunction: Function) {
+    const party = scene.getParty();
+    if (modifierType instanceof PokemonModifierType) {
+      if (modifierType instanceof FusePokemonModifierType) {
+        scene.ui.setModeWithoutClear(Mode.PARTY, PartyUiMode.SPLICE, -1, (fromSlotIndex: integer, spliceSlotIndex: integer) => {
+          if (spliceSlotIndex !== undefined && fromSlotIndex < 6 && spliceSlotIndex < 6 && fromSlotIndex !== spliceSlotIndex) {
+            scene.ui.setMode(Mode.MODIFIER_SELECT, true).then(() => {
+              const modifier = modifierType.newModifier(party[fromSlotIndex], party[spliceSlotIndex]);
+              scene.addModifier(modifier, false, true).then(() => cancelFunction());
+            });
+          } else {
+            cancelFunction();
+          }
+        }, modifierType.selectFilter);
+      } else {
+        const pokemonModifierType = modifierType as PokemonModifierType;
+        const isMoveModifier = modifierType instanceof PokemonMoveModifierType;
+        const isTmModifier = modifierType instanceof TmModifierType;
+        const isRememberMoveModifier = modifierType instanceof RememberMoveModifierType;
+        const isPpRestoreModifier = (modifierType instanceof PokemonPpRestoreModifierType || modifierType instanceof PokemonPpUpModifierType);
+        const partyUiMode = isMoveModifier ? PartyUiMode.MOVE_MODIFIER
+          : isTmModifier ? PartyUiMode.TM_MODIFIER
+            : isRememberMoveModifier ? PartyUiMode.REMEMBER_MOVE_MODIFIER
+              : PartyUiMode.MODIFIER;
+        const tmMoveId = isTmModifier
+          ? (modifierType as TmModifierType).moveId
+          : undefined;
+        console.log("ID: " + tmMoveId);
+        scene.ui.setModeWithoutClear(Mode.PARTY, partyUiMode, -1, (slotIndex: integer, option: PartyOption) => {
+          if (slotIndex < 6) {
+            scene.ui.setMode(Mode.MODIFIER_SELECT, true).then(() => {
+              let modifier: Modifiers.Modifier;
+              if (isMoveModifier) {
+                modifier = modifierType.newModifier(party[slotIndex], option - PartyOption.MOVE_1);
+              } else if (isRememberMoveModifier) {
+                modifier = modifierType.newModifier(party[slotIndex], option as integer);
+              } else {
+                modifier = modifierType.newModifier(party[slotIndex]);
+              }
+              scene.addModifier(modifier, false, true).then(() => cancelFunction());
+            });
+          } else {
+            cancelFunction();
+          }
+        }, pokemonModifierType.selectFilter, modifierType instanceof PokemonMoveModifierType ? (modifierType as PokemonMoveModifierType).moveSelectFilter : undefined, tmMoveId, isPpRestoreModifier);
+      }
+    } else {
+      scene.addModifier(modifierType.newModifier(), false, true, false, true).then(() => cancelFunction());
+    }
+  }
+
+  restartBattle(scene: BattleScene) {
+
+    const cancel = () => scene.ui.setMode(Mode.COMMAND);
+
+    scene.ui.setMode(Mode.MESSAGE).then(() => {
+      scene.ui.showText("Would you like to retry from the start of the battle?", null, () => {
+        scene.ui.setMode(Mode.CONFIRM, () => {
+          scene.ui.fadeOut(1250).then(() => {
+            scene.reset();
+            scene.clearPhaseQueue();
+            scene.gameData.loadSession(scene, scene.sessionSlotId).then(() => {
+              scene.pushPhase(new EncounterPhase(scene, true));
+
+              const availablePartyMembers = scene.getParty().filter(p => p.isAllowedInBattle()).length;
+
+              scene.pushPhase(new SummonPhase(scene, 0));
+              if (scene.currentBattle.double && availablePartyMembers > 1) {
+                scene.pushPhase(new SummonPhase(scene, 1));
+              }
+              if (scene.currentBattle.waveIndex > 1 && scene.currentBattle.battleType !== BattleType.TRAINER) {
+                scene.pushPhase(new CheckSwitchPhase(scene, 0, scene.currentBattle.double));
+                if (scene.currentBattle.double && availablePartyMembers > 1) {
+                  scene.pushPhase(new CheckSwitchPhase(scene, 1, scene.currentBattle.double));
+                }
+              }
+
+              scene.ui.fadeIn(1250);
+              scene.shiftPhase();
+            });
+          });
+        }, () => cancel(), false, 0, 0, 1000);
+      }, 0, false, 0);
+    });
+  }
+}
+
+class ItemCategory {
+  categoryName: string;
+  array: any[];
+
+  constructor(categoryName: string, array: any[]) {
+    this.categoryName = categoryName;
+    this.array = array;
+  }
+
+  static combineToArray(categories: ItemCategory[], existingArray: any[] = []): any[] {
+    const out = existingArray ? existingArray : [];
+    for (const category of categories) {
+      for (const item of category.array) {
+        if (item instanceof ItemCategory) {
+          out.push(...ItemCategory.combineToArray([item]));
+        } else {
+          out.push(item);
+        }
+      }
+    }
+    return out;
   }
 }

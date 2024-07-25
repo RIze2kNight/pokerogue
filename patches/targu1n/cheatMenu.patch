@@ -1,0 +1,172 @@
+~targu1n-CheatMenu
+#src/modifier/modifier-type.ts
+-class AddPokeballModifierType extends ModifierType {
+export class AddPokeballModifierType extends ModifierType {
+
+#src/modifier/modifier-type.ts
+-class AddVoucherModifierType extends ModifierType {
+export class AddVoucherModifierType extends ModifierType {
+
+#src/modifier/modifier-type.ts
+-class AllPokemonFullReviveModifierType extends AllPokemonFullHpRestoreModifierType {
+export class AllPokemonFullReviveModifierType extends AllPokemonFullHpRestoreModifierType {
+
+#src/modifier/modifier-type.ts
+-class SpeciesStatBoosterModifierTypeGenerator extends ModifierTypeGenerator {
+export class SpeciesStatBoosterModifierTypeGenerator extends ModifierTypeGenerator {
+
+
+#src/ui/abstact-option-select-ui-handler.ts
++    super.show(args);
+    this.scrollCursor = 0;
+
+
+#src/ui/modifier-select-ui-handler.ts
++  private checkButtonContainer: Phaser.GameObjects.Container;
+  private cheatMenuButtonContainer: Phaser.GameObjects.Container;
+
+#src/ui/modifier-select-ui-handler.ts
++    this.checkButtonContainer.add(checkButtonText);
+
+    this.cheatMenuButtonContainer = this.scene.add.container((this.scene.game.canvas.width / 6) -141, -64);
+    this.cheatMenuButtonContainer.setName("cheat-btn");
+    this.cheatMenuButtonContainer.setVisible(false);
+    ui.add(this.cheatMenuButtonContainer);
+
+    const cheatMenuButtonText = addTextObject(this.scene, -4, -2, "Cheats", TextStyle.PARTY);
+    cheatMenuButtonText.setName("text-cheat-btn");
+    cheatMenuButtonText.setOrigin(1, 0);
+    this.cheatMenuButtonContainer.add(cheatMenuButtonText);
+
+#src/ui/modifier-select-ui-handler.ts
++    this.checkButtonContainer.setVisible(false);
+    this.checkButtonContainer.setAlpha(0);
+
+    this.cheatMenuButtonContainer.setVisible(false);
+    this.cheatMenuButtonContainer.setAlpha(0);
+
+#src/ui/modifier-select-ui-handler.ts
++      this.checkButtonContainer.setAlpha(0);
+      this.cheatMenuButtonContainer.setAlpha(0);
+
+#src/ui/modifier-select-ui-handler.ts
++      this.checkButtonContainer.setVisible(true);
+      this.cheatMenuButtonContainer.setVisible(true);
+
+#src/ui/modifier-select-ui-handler.ts
+-        targets: [ this.rerollButtonContainer, this.lockRarityButtonContainer, this.checkButtonContainer ],
+        targets: [ this.rerollButtonContainer, this.lockRarityButtonContainer, this.checkButtonContainer, this.cheatMenuButtonContainer ],
+
+#src/ui/modifier-select-ui-handler.ts
+-        if (this.rowCursor === 0 && this.cursor === 3) {
+        if (this.rowCursor === 0 && this.cursor === 4) {
+
+#src/ui/modifier-select-ui-handler.ts
++        } else if (this.rowCursor < this.shopOptionsRows.length + 1) {
+          while (this.cursor >= this.options.length) {
+            this.setCursor(this.cursor-1);
+          }
+
+#src/ui/modifier-select-ui-handler.ts
++          success = this.setRowCursor(this.rowCursor - 1);
+          if (!this.rowCursor) {
+            this.setCursor(this.cursor === 2 ? 3 : this.cursor);
+          }
+
+#src/ui/modifier-select-ui-handler.ts
++        } else if (this.lockRarityButtonContainer.visible && this.cursor === 0) {
+          success = this.setCursor(4);
+
+#src/ui/modifier-select-ui-handler.ts
+-          case 1:
+-            success = this.rerollButtonContainer.visible && this.setCursor(0);
+-            break;
+-          case 2:
+-            if (this.transferButtonContainer.visible) {
+-              success = this.setCursor(1);
+-            } else if (this.rerollButtonContainer.visible) {
+-              success = this.setCursor(0);
+          case 1:
+            success = this.setCursor(0);
+            break;
+          case 2:
+            success = this.rerollButtonContainer.visible && this.setCursor(1);
+            break;
+          case 3:
+            if (this.transferButtonContainer.visible) {
+              success = this.setCursor(2);
+            } else if (this.rerollButtonContainer.visible) {
+              success = this.setCursor(1);
+
+#src/ui/modifier-select-ui-handler.ts
+-          case 0:
+-            if (this.transferButtonContainer.visible) {
+-              success = this.setCursor(1);
+-            } else {
+-              success = this.setCursor(2);
+-            }
+-            break;
+-          case 1:
+-            success = this.setCursor(2);
+-            break;
+-          case 2:
+-            success = false;
+-            break;
+          case 0:
+            success = this.setCursor(1);
+            break;
+          case 1:
+            if (this.transferButtonContainer.visible) {
+              success = this.setCursor(2);
+            } else {
+              success = this.setCursor(3);
+            }
+            break;
+          case 2:
+            success = this.setCursor(3);
+            break;
+          case 3:
+
+#src/ui/modifier-select-ui-handler.ts
++    } else if (cursor === 1) {
+      this.cursorObj.setPosition((this.scene.game.canvas.width / 6) - 180, -60);
+      ui.showText("Open a cheat Menu to give yourself items.");
+    } else if (cursor === 2) {
+
+#src/ui/modifier-select-ui-handler.ts
+-    } else if (cursor === 2) {
+    } else if (cursor === 3) {
+
+#src/ui/modifier-select-ui-handler.ts
+-    [ this.rerollButtonContainer, this.checkButtonContainer, this.transferButtonContainer, this.lockRarityButtonContainer ].forEach(container => {
+    [ this.rerollButtonContainer, this.checkButtonContainer, this.transferButtonContainer, this.cheatMenuButtonContainer, this.lockRarityButtonContainer ].forEach(container => {
+
+
+#src/phases.ts
++            this.scene.playSound("buy");
++          }
++          break;
++        case 1:
+          this.scene.mods.showCheatMenu(this.scene, this.isPlayer(), typeOptions, modifierSelectCallback, this.getRerollCost(typeOptions, this.scene.lockModifierTiers), party);
+          break;
+        case 2:
+
+#src/phases.ts
++          break;
+-        case 2:
+        case 3:
+
+#src/phases.ts
++          break;
+-        case 3:
+        case 4:
+
+
+
+
+
+
+
+
+
+
