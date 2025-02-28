@@ -1,0 +1,141 @@
+~targu1n-Settings
+#src/battle-scene.ts
++import { Moves } from "#enums/moves";
+import { Mods } from "./mods";
+import { ModData } from "./mod-Data";
+
+#src/battle-scene.ts
++  public rngOffset: number = 0;
+  public mods: Mods = new Mods();
+  public modData: ModData;
+
+#src/battle-scene.ts
++    this.uiInputs = new UiInputs(this.inputController);
+    //this.modData = new ModData(this);
+
+#src/battle-scene.ts
++    if (clearData) {
+      //this.modData = new ModData(this);
+
+#src/ui-inputs.ts
++import SettingsAudioUiHandler from "./ui/settings/settings-audio-ui-handler";
+import ModSettingsUiHandler from "./ui/settings/mod-settings-ui-handler";
+
+#src/ui-inputs.ts
+-    const whitelist = [ StarterSelectUiHandler, PokedexUiHandler, PokedexPageUiHandler, SettingsUiHandler, RunInfoUiHandler, SettingsDisplayUiHandler, SettingsAudioUiHandler, SettingsGamepadUiHandler, SettingsKeyboardUiHandler ];
+    const whitelist = [ StarterSelectUiHandler, PokedexUiHandler, PokedexPageUiHandler, SettingsUiHandler, ModSettingsUiHandler, RunInfoUiHandler, SettingsDisplayUiHandler, SettingsAudioUiHandler, SettingsGamepadUiHandler, SettingsKeyboardUiHandler ];
+
+#src/system/game-data.ts
++import { Species } from "#enums/species";
+import { setModSetting } from "./settings/mod-settings";
+
+#src/system/game-data.ts
+-  public saveSetting(setting: string, valueIndex: number): boolean {
+-    let settings: object = {};
+-    if (localStorage.hasOwnProperty("settings")) {
+-      settings = JSON.parse(localStorage.getItem("settings")!); // TODO: is this bang correct?
+-    }
+-
+-    setSetting(setting, valueIndex);
+-
+-    settings[setting] = valueIndex;
+-    settings["gameVersion"] = globalScene.game.config.gameVersion;
+-
+-    localStorage.setItem("settings", JSON.stringify(settings));
+-
+-    return true;
+-  }
+  public saveSetting(setting: string, valueIndex: number, location?: PropertyKey): boolean {
+    let saveLocation = location;
+    if(!location) saveLocation = "settings";
+    let settings: object = {};
+    if (localStorage.hasOwnProperty("settings")) {
+      settings = JSON.parse(localStorage.getItem("settings")!); // TODO: is this bang correct?
+    }
+
+    if(saveLocation === "settings_mods"){
+      setModSetting(setting, valueIndex);
+    }else{
+      setSetting(setting, valueIndex);
+    }
+
+    settings[setting] = valueIndex;
+    settings["gameVersion"] = globalScene.game.config.gameVersion;
+
+    localStorage.setItem("settings", JSON.stringify(settings));
+
+    return true;
+  }
+
+#src/system/game-data.ts
++    for (const setting of Object.keys(settings)) {
++      setSetting(setting, settings[setting]);
++    }
+    if (!localStorage.hasOwnProperty("settings_mods")) {
+      return false;
+    }
+    const settingsMods = JSON.parse(localStorage.getItem("settings_mods"));
+
+    for (const setting of Object.keys(settingsMods)) {
+      setModSetting(setting, settingsMods[setting]);
+    }
+
+#src/ui/ui.ts
++import SettingsUiHandler from "./settings/settings-ui-handler";
+import ModSettingsUiHandler from "./settings/mod-settings-ui-handler";
+
+#src/ui/ui.ts
++  SETTINGS,
+  SETTINGS_MOD,
+
+#src/ui/ui.ts
++      new SettingsUiHandler(),
+      new ModSettingsUiHandler(globalScene),
+
+#src/ui/settings/abstract-settings-ui-handler.ts
+-        globalScene.gameData.saveSetting(setting.key, cursor);
+      globalScene.gameData.saveSetting(setting.key, cursor, this.localStorageKey);
+
+
+#src/ui/settings/navigationMenu.ts
++      Mode.SETTINGS,
+      Mode.SETTINGS_MOD,
+
+#src/ui/settings/navigationMenu.ts
+-    this.labels = [ i18next.t("settings:general"), i18next.t("settings:display"), i18next.t("settings:audio"), i18next.t("settings:gamepad"), i18next.t("settings:keyboard") ];
+    this.labels = [ i18next.t("settings:general"), "Mods", i18next.t("settings:display"), i18next.t("settings:audio"), i18next.t("settings:gamepad"), i18next.t("settings:keyboard") ];
+
+#src/ui/starter-select-ui-handler.ts
+-    return starterData.candyCount >= getPassiveCandyCount(speciesStarterCosts[speciesId])
+-      && !(starterData.passiveAttr & PassiveAttr.UNLOCKED);
+    return starterData.candyCount >= getPassiveCandyCount(speciesStarterCosts[speciesId])*globalScene.mods.candyCostMultiplier
+      && !(starterData.passiveAttr & PassiveAttr.UNLOCKED);
+
+#src/ui/starter-select-ui-handler.ts
+-    return starterData.candyCount >= getValueReductionCandyCounts(speciesStarterCosts[speciesId])[starterData.valueReduction]
+-        && starterData.valueReduction < valueReductionMax;
+    return starterData.candyCount >= getValueReductionCandyCounts(speciesStarterCosts[speciesId])[starterData.valueReduction]*globalScene.mods.candyCostMultiplier
+        && starterData.valueReduction < valueReductionMax;
+
+#src/ui/starter-select-ui-handler.ts
+-    return starterData.candyCount >= getSameSpeciesEggCandyCounts(speciesStarterCosts[speciesId]);
+    return starterData.candyCount >= getSameSpeciesEggCandyCounts(speciesStarterCosts[speciesId])*globalScene.mods.candyCostMultiplier;
+
+#src/ui/starter-select-ui-handler.ts
+-              const passiveCost = getPassiveCandyCount(speciesStarterCosts[this.lastSpecies.speciesId]);
+              const passiveCost = getPassiveCandyCount(speciesStarterCosts[this.lastSpecies.speciesId])*globalScene.mods.candyCostMultiplier;
+
+#src/ui/starter-select-ui-handler.ts
+-              const reductionCost = getValueReductionCandyCounts(speciesStarterCosts[this.lastSpecies.speciesId])[valueReduction];
+              const reductionCost = getValueReductionCandyCounts(speciesStarterCosts[this.lastSpecies.speciesId])[valueReduction]*globalScene.mods.candyCostMultiplier;
+
+#src/ui/starter-select-ui-handler.ts
+-            const sameSpeciesEggCost = getSameSpeciesEggCandyCounts(speciesStarterCosts[this.lastSpecies.speciesId]);
+            const sameSpeciesEggCost = getSameSpeciesEggCandyCounts(speciesStarterCosts[this.lastSpecies.speciesId])*globalScene.mods.candyCostMultiplier;
+
+
+
+
+
+
+
