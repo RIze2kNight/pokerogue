@@ -49,9 +49,6 @@ import { setModSetting } from "./settings/mod-settings";
     let saveLocation = location;
     if(!location) saveLocation = "settings";
     let settings: object = {};
-    if (localStorage.hasOwnProperty("settings")) {
-      settings = JSON.parse(localStorage.getItem("settings")!); // TODO: is this bang correct?
-    }
 
     if(saveLocation === "settings_mods"){
       setModSetting(setting, valueIndex);
@@ -59,11 +56,13 @@ import { setModSetting } from "./settings/mod-settings";
       setSetting(setting, valueIndex);
     }
 
+    if (localStorage.hasOwnProperty(saveLocation)) {
+      settings = JSON.parse(localStorage.getItem(saveLocation)!); // TODO: is this bang correct?
+    }
+
     settings[setting] = valueIndex;
     settings["gameVersion"] = globalScene.game.config.gameVersion;
-
-    localStorage.setItem("settings", JSON.stringify(settings));
-
+    localStorage.setItem(saveLocation, JSON.stringify(settings));
     return true;
   }
 

@@ -1,3 +1,4 @@
+import { globalScene } from "#app/global-scene";
 import type { PlayerPokemon, PokemonMove } from "#app/field/pokemon";
 import type Pokemon from "#app/field/pokemon";
 import type BattleScene from "#app/battle-scene";
@@ -9,7 +10,6 @@ import type PokemonSpecies from "#app/data/pokemon-species";
 import { getPokemonSpecies } from "#app/data/pokemon-species";
 import { speciesStarterCosts } from "#app/data/balance/starters";
 import { SpeciesFormKey } from "#enums/species-form-key";
-import { achvs } from "#app/system/achv";
 import type StarterSelectUiHandler from "#app/ui/starter-select-ui-handler";
 import i18next from "i18next";
 import type UI from "#app/ui/ui";
@@ -22,8 +22,6 @@ import { Nature } from "#enums/nature";
 import * as Utils from "./utils";
 import { pokemonFormChanges, SpeciesFormChangeItemTrigger } from "#app/data/pokemon-forms";
 import { Species } from "#enums/species";
-import { WeatherType } from "#enums/weather-type";
-import { TerrainType } from "#app/data/terrain";
 import type {
   ModifierType,
   ModifierTypeOption,
@@ -58,16 +56,20 @@ import {
   TerastallizeModifierType,
   TmModifierType
 } from "#app/modifier/modifier-type";
-import { pokemonEvolutions } from "#app/data/balance/pokemon-evolutions";
+import { EvolutionItem, pokemonEvolutions } from "#app/data/balance/pokemon-evolutions";
 import * as Modifiers from "#app/modifier/modifier";
 import { Type } from "#enums/type";
 import { BerryType } from "#enums/berry-type";
+import { Stat } from "#enums/stat";
 import type { TempBattleStat } from "#app/data/temp-battle-stat";
 import { PartyOption, PartyUiMode } from "#app/ui/party-ui-handler";
-import { BattleType } from "#app/battle";
-import { EncounterPhase } from "#app/phases/encounter-phase";
-import { SummonPhase } from "#app/phases/summon-phase";
-import { CheckSwitchPhase } from "#app/phases/check-switch-phase";
+// import { EncounterPhase } from "#app/phases/encounter-phase";
+// import { achvs } from "#app/system/achv";
+// import { BattleType } from "#app/battle";
+// import { SummonPhase } from "#app/phases/summon-phase";
+// import { CheckSwitchPhase } from "#app/phases/check-switch-phase";
+// import { WeatherType } from "#enums/weather-type";
+// import { TerrainType } from "#app/data/terrain";
 
 export class Mods {
 
@@ -95,7 +97,7 @@ export class Mods {
   /**
    * Adds egg moves to learnable moves
    */
-  getLearnableMoves(scene: BattleScene, species: PokemonSpecies, fusionSpecies: PokemonSpecies, moveset: PokemonMove[], levelMoves: LevelMoves): Moves[] {
+  getLearnableMoves(species: PokemonSpecies, fusionSpecies: PokemonSpecies, moveset: PokemonMove[], levelMoves: LevelMoves): Moves[] {
 
     const learnableMoves = levelMoves
       .map((lm) => lm[1])
@@ -108,7 +110,7 @@ export class Mods {
       const speciesId = speciesIndex < 1 ? species.getRootSpeciesId() : fusionSpecies.getRootSpeciesId();
       for (let moveIndex = 0; moveIndex < 4; moveIndex++) {
         if (
-          scene.gameData.starterData[speciesId].eggMoves & Math.pow(2, moveIndex) &&
+          globalScene.gameData.starterData[speciesId].eggMoves & Math.pow(2, moveIndex) &&
           moveset.filter((m) => m.moveId !== speciesEggMoves[species.getRootSpeciesId()][moveIndex]).length === moveset.length
         ) {
           learnableMoves[learnableMoves.length] = speciesEggMoves[speciesId][moveIndex];
@@ -119,76 +121,9 @@ export class Mods {
   }
 
   /**
-   * Skips a lot of the animations when hatching eggs to speed it up.
-   */
-  fastHatchAnimation(scene: BattleScene, pokemon: PlayerPokemon, eggMoveIndex: integer, eggContainer: Phaser.GameObjects.Container,
-    pokemonSprite: Phaser.GameObjects.Sprite, pokemonShinySparkle: Phaser.GameObjects.Sprite): Promise<void> {
-
-    const isShiny = pokemon.isShiny();
-    if (pokemon.species.subLegendary) {
-      scene.validateAchv(achvs.HATCH_SUB_LEGENDARY);
-    }
-    if (pokemon.species.legendary) {
-      scene.validateAchv(achvs.HATCH_LEGENDARY);
-    }
-    if (pokemon.species.mythical) {
-      scene.validateAchv(achvs.HATCH_MYTHICAL);
-    }
-    if (isShiny) {
-      scene.validateAchv(achvs.HATCH_SHINY);
-    }
-
-    return new Promise((resolve) => {
-      this.revealHatchSprite(scene, pokemon, eggContainer, pokemonSprite, pokemonShinySparkle);
-      scene.ui.showText(
-        `A ${pokemon.name} hatched!`,
-        null,
-        () => {
-          scene.gameData.updateSpeciesDexIvs(pokemon.species.speciesId, pokemon.ivs);
-          scene.gameData.setPokemonCaught(pokemon, true, true).then(() => {
-            scene.gameData
-              .setEggMoveUnlocked(pokemon.species, eggMoveIndex)
-              .then(() => {
-                scene.ui.showText(null, 0);
-              })
-              .then(() => resolve());
-          });
-        },
-        null,
-        true,
-        null
-      );
-    });
-  }
-
-  private revealHatchSprite(
-    scene: BattleScene,
-    pokemon: PlayerPokemon,
-    eggContainer: Phaser.GameObjects.Container,
-    pokemonSprite: Phaser.GameObjects.Sprite,
-    pokemonShinySparkle: Phaser.GameObjects.Sprite
-  ) {
-    pokemon.cry();
-
-    eggContainer.setVisible(false);
-    pokemonSprite.play(pokemon.getSpriteKey(true));
-    pokemonSprite.setPipelineData("ignoreTimeTint", true);
-    pokemonSprite.setPipelineData("spriteKey", pokemon.getSpriteKey());
-    pokemonSprite.setPipelineData("shiny", pokemon.shiny);
-    pokemonSprite.setPipelineData("variant", pokemon.variant);
-    pokemonSprite.setVisible(true);
-
-    if (pokemon.isShiny()) {
-      pokemonShinySparkle.play(`sparkle${pokemon.variant ? `_${pokemon.variant + 1}` : ""}`);
-      scene.playSound("sparkle");
-    }
-  }
-
-  /**
    * Egg moves candy unlock store
    */
   showEggMovesUnlock(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     candyCount: any,
@@ -198,13 +133,13 @@ export class Mods {
     const options = [];
 
     for (let index = 0; index < 4; index++) {
-      const eggMoveUnlocked = scene.gameData.starterData[lastSpecies.speciesId].eggMoves & Math.pow(2, index);
+      const eggMoveUnlocked = globalScene.gameData.starterData[lastSpecies.speciesId].eggMoves & Math.pow(2, index);
       if (!eggMoveUnlocked) {
         options.push({
           label: `x${this.unlockEggMovePrice(index, lastSpecies)} Unlock ${this.getEggMoveName(lastSpecies, index)}`,
           handler: () => {
             if (candyCount >= this.unlockEggMovePrice(index, lastSpecies)) {
-              this.unlockEggMove(scene, ui, lastSpecies, uiHandler, pokemonCandyCountText, index);
+              this.unlockEggMove(ui, lastSpecies, uiHandler, pokemonCandyCountText, index);
             }
             return false;
           },
@@ -228,22 +163,21 @@ export class Mods {
   }
 
   protected unlockEggMove(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     uiHandler: StarterSelectUiHandler,
     pokemonCandyCountText: Phaser.GameObjects.Text,
     index: integer
   ) {
-    scene.gameData.setEggMoveUnlocked(lastSpecies, index);
-    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockEggMovePrice(index, lastSpecies);
+    globalScene.gameData.setEggMoveUnlocked(lastSpecies, index);
+    globalScene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockEggMovePrice(index, lastSpecies);
 
-    pokemonCandyCountText.setText(`x${scene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
+    pokemonCandyCountText.setText(`x${globalScene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
     uiHandler.setSpeciesDetails(lastSpecies, undefined, undefined, undefined, undefined, undefined, undefined);
 
-    scene.gameData.saveSystem().then((success) => {
+    globalScene.gameData.saveSystem().then((success) => {
       if (!success) {
-        return scene.reset(true);
+        return globalScene.reset(true);
       }
     });
     ui.setMode(Mode.STARTER_SELECT);
@@ -267,7 +201,6 @@ export class Mods {
    * Shiny unlock store
    */
   showShiniesUnlock(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     candyCount: any,
@@ -278,12 +211,12 @@ export class Mods {
 
     for (let rarity = 1; rarity < 4; rarity++) {
       const shinyVariant = this.getShinyRarity(rarity);
-      if (!(scene.gameData.dexData[lastSpecies.speciesId].caughtAttr & shinyVariant)) {
+      if (!(globalScene.gameData.dexData[lastSpecies.speciesId].caughtAttr & shinyVariant)) {
         options.push({
           label: `x${this.unlockShinyPrice(rarity, lastSpecies)} Unlock ${this.getShinyRarityName(rarity)}`,
           handler: () => {
             if (candyCount >= this.unlockShinyPrice(rarity, lastSpecies)) {
-              this.unlockShiny(scene, ui, lastSpecies, uiHandler, pokemonCandyCountText, rarity);
+              this.unlockShiny(ui, lastSpecies, uiHandler, pokemonCandyCountText, rarity);
             }
             return false;
           },
@@ -307,27 +240,26 @@ export class Mods {
   }
 
   protected unlockShiny(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     uiHandler: StarterSelectUiHandler,
     pokemonCandyCountText: Phaser.GameObjects.Text,
     rarity: integer
   ) {
-    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockShinyPrice(rarity, lastSpecies);
+    globalScene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockShinyPrice(rarity, lastSpecies);
     while (rarity > 0) {
-      scene.gameData.dexData[lastSpecies.speciesId].caughtAttr |= this.getShinyRarity(rarity);
+      globalScene.gameData.dexData[lastSpecies.speciesId].caughtAttr |= this.getShinyRarity(rarity);
       rarity--;
     }
-    pokemonCandyCountText.setText(`x${scene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
+    pokemonCandyCountText.setText(`x${globalScene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
 
     uiHandler.setSpecies(lastSpecies);
     uiHandler.updateInstructions();
     uiHandler.setSpeciesDetails(lastSpecies, undefined, undefined, undefined, undefined, undefined, undefined);
 
-    scene.gameData.saveSystem().then((success) => {
+    globalScene.gameData.saveSystem().then((success) => {
       if (!success) {
-        return scene.reset(true);
+        return globalScene.reset(true);
       }
     });
     ui.setMode(Mode.STARTER_SELECT);
@@ -366,7 +298,6 @@ export class Mods {
    * Ability unlock store
    */
   showAbilityUnlock(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     candyCount: any,
@@ -374,7 +305,7 @@ export class Mods {
     pokemonCandyCountText: Phaser.GameObjects.Text
   ) {
     const options = [];
-    const abilityAttr = scene.gameData.starterData[lastSpecies.speciesId].abilityAttr;
+    const abilityAttr = globalScene.gameData.starterData[lastSpecies.speciesId].abilityAttr;
 
     const allAbilityAttr = this.getAllAbilityAttr(lastSpecies);
 
@@ -390,7 +321,7 @@ export class Mods {
           label: `x${this.unlockAbilityPrice(selectedAbility, lastSpecies)} Unlock ${this.getAbilityName(selectedAbility, lastSpecies)}`,
           handler: () => {
             if (candyCount >= 0) {
-              this.unlockAbility(scene, ui, lastSpecies, uiHandler, pokemonCandyCountText, selectedAbility);
+              this.unlockAbility(ui, lastSpecies, uiHandler, pokemonCandyCountText, selectedAbility);
             }
             return false;
           },
@@ -414,25 +345,24 @@ export class Mods {
   }
 
   protected unlockAbility(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     uiHandler: StarterSelectUiHandler,
     pokemonCandyCountText: Phaser.GameObjects.Text,
     selectedAttr: number
   ) {
-    scene.gameData.starterData[lastSpecies.speciesId].abilityAttr = scene.gameData.starterData[lastSpecies.speciesId].abilityAttr | selectedAttr;
+    globalScene.gameData.starterData[lastSpecies.speciesId].abilityAttr = globalScene.gameData.starterData[lastSpecies.speciesId].abilityAttr | selectedAttr;
 
-    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockAbilityPrice(selectedAttr, lastSpecies);
-    pokemonCandyCountText.setText(`x${scene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
+    globalScene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockAbilityPrice(selectedAttr, lastSpecies);
+    pokemonCandyCountText.setText(`x${globalScene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
 
     uiHandler.setSpecies(lastSpecies);
     uiHandler.updateInstructions();
     uiHandler.setSpeciesDetails(lastSpecies, undefined, undefined, undefined, undefined, undefined, undefined);
 
-    scene.gameData.saveSystem().then((success) => {
+    globalScene.gameData.saveSystem().then((success) => {
       if (!success) {
-        return scene.reset(true);
+        return globalScene.reset(true);
       }
     });
     ui.setMode(Mode.STARTER_SELECT);
@@ -475,7 +405,6 @@ export class Mods {
    * IV improvement store
    */
   showIVsUnlock(
-    scene: BattleScene,
     ui: BattleScene["ui"],
     lastSpecies: PokemonSpecies,
     candyCount: any,
@@ -485,12 +414,12 @@ export class Mods {
     const options = [];
 
     for (let stat = 0; stat < 6; stat++) {
-      if (scene.gameData.dexData[lastSpecies.speciesId].ivs[stat] < 31) {
+      if (globalScene.gameData.dexData[lastSpecies.speciesId].ivs[stat] < 31) {
         options.push({
           label: `x${this.improveIVPrice(lastSpecies)} Improve ${this.getStatName(stat)}`,
           handler: () => {
             if (candyCount >= this.improveIVPrice(lastSpecies)) {
-              this.improveIV(scene, ui, lastSpecies, uiHandler, pokemonCandyCountText, stat);
+              this.improveIV(ui, lastSpecies, uiHandler, pokemonCandyCountText, stat);
             }
             return false;
           },
@@ -514,28 +443,27 @@ export class Mods {
   }
 
   protected improveIV(
-    scene: BattleScene,
     ui: BattleScene["ui"],
     lastSpecies: PokemonSpecies,
     uiHandler: StarterSelectUiHandler,
     pokemonCandyCountText: Phaser.GameObjects.Text,
     stat: number
   ) {
-    const IVs = scene.gameData.dexData[lastSpecies.speciesId].ivs;
+    const IVs = globalScene.gameData.dexData[lastSpecies.speciesId].ivs;
     IVs[stat] = Math.min(IVs[stat] + 5, 31);
 
-    scene.gameData.updateSpeciesDexIvs(lastSpecies.speciesId, IVs);
+    globalScene.gameData.updateSpeciesDexIvs(lastSpecies.speciesId, IVs);
 
-    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.improveIVPrice(lastSpecies);
-    pokemonCandyCountText.setText(`x${scene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
+    globalScene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.improveIVPrice(lastSpecies);
+    pokemonCandyCountText.setText(`x${globalScene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
 
     uiHandler.setSpecies(lastSpecies);
     uiHandler.updateInstructions();
     uiHandler.setSpeciesDetails(lastSpecies, undefined, undefined, undefined, undefined, undefined, undefined);
 
-    scene.gameData.saveSystem().then((success) => {
+    globalScene.gameData.saveSystem().then((success) => {
       if (!success) {
-        return scene.reset(true);
+        return globalScene.reset(true);
       }
     });
     ui.setMode(Mode.STARTER_SELECT);
@@ -549,7 +477,7 @@ export class Mods {
   /**
    * Nature unlock store
    */
-  showNatureUnlock(scene: BattleScene,
+  showNatureUnlock(
     ui: BattleScene["ui"],
     lastSpecies: PokemonSpecies,
     candyCount: any,
@@ -558,12 +486,12 @@ export class Mods {
 
     const options = [];
     for (let nature = 0; nature < 25; nature++) {
-      if (!(scene.gameData.dexData[lastSpecies.speciesId].natureAttr & Math.pow(2, nature + 1))) {
+      if (!(globalScene.gameData.dexData[lastSpecies.speciesId].natureAttr & Math.pow(2, nature + 1))) {
         options.push({
           label: `x${this.unlockNaturePrice(lastSpecies)} Improve ${getNatureName(nature)}`,
           handler: () => {
             if (candyCount >= this.unlockNaturePrice(lastSpecies)) {
-              this.unlockNature(scene, ui, lastSpecies, uiHandler, pokemonCandyCountText, nature);
+              this.unlockNature(ui, lastSpecies, uiHandler, pokemonCandyCountText, nature);
             }
             return false;
           }
@@ -574,25 +502,24 @@ export class Mods {
   }
 
   protected unlockNature(
-    scene: BattleScene,
     ui: UI,
     lastSpecies: PokemonSpecies,
     uiHandler: StarterSelectUiHandler,
     pokemonCandyCountText: Phaser.GameObjects.Text,
     selectedNature: number
   ) {
-    scene.gameData.dexData[lastSpecies.speciesId].natureAttr |= Math.pow(2, selectedNature + 1);
+    globalScene.gameData.dexData[lastSpecies.speciesId].natureAttr |= Math.pow(2, selectedNature + 1);
 
-    scene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockNaturePrice(lastSpecies);
-    pokemonCandyCountText.setText(`x${scene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
+    globalScene.gameData.starterData[lastSpecies.speciesId].candyCount -= this.unlockNaturePrice(lastSpecies);
+    pokemonCandyCountText.setText(`x${globalScene.gameData.starterData[lastSpecies.speciesId].candyCount}`);
 
     uiHandler.setSpecies(lastSpecies);
     uiHandler.updateInstructions();
     uiHandler.setSpeciesDetails(lastSpecies, undefined, undefined, undefined, undefined, undefined, undefined);
 
-    scene.gameData.saveSystem().then((success) => {
+    globalScene.gameData.saveSystem().then((success) => {
       if (!success) {
-        return scene.reset(true);
+        return globalScene.reset(true);
       }
     });
     ui.setMode(Mode.STARTER_SELECT);
@@ -603,20 +530,20 @@ export class Mods {
     return Math.round((speciesStarterCosts[species.speciesId] > 5 ? 6 : speciesStarterCosts[species.speciesId] > 3 ? 8 : 10) * this.candyCostMultiplier);
   }
 
-  hasAllNatures(scene: BattleScene, lastSpecies: PokemonSpecies): boolean {
+  hasAllNatures(lastSpecies: PokemonSpecies): boolean {
     const allNatures = (1 << 26) - 2; // = 25 bits set to 1
-    return (scene.gameData.dexData[lastSpecies.speciesId].natureAttr & allNatures) === allNatures;
+    return (globalScene.gameData.dexData[lastSpecies.speciesId].natureAttr & allNatures) === allNatures;
   }
 
   /*
   * Regen Completed Pokemon
   */
-  regenerateCompletedPokemon(species: Species, scene: BattleScene): boolean {
+  regenerateCompletedPokemon(species: Species): boolean {
     let regen = false;
 
     if (Utils.randInt(100) <= this.regenPokeChance) {
-      const dexEntry = scene.gameData.dexData[getPokemonSpecies(species).getRootSpeciesId()];
-      const abilityAttr = scene.gameData.starterData[getPokemonSpecies(species).getRootSpeciesId()].abilityAttr;
+      const dexEntry = globalScene.gameData.dexData[getPokemonSpecies(species).getRootSpeciesId()];
+      const abilityAttr = globalScene.gameData.starterData[getPokemonSpecies(species).getRootSpeciesId()].abilityAttr;
       const genderRatio = getPokemonSpecies(species).malePercent;
 
       const gendersUncaught = !(
@@ -627,7 +554,7 @@ export class Mods {
       );
       const formsUncaught = !!getPokemonSpecies(species)
         .forms.filter((f) => !f.formKey || !pokemonFormChanges[species]?.find((fc) => fc.formKey))
-        .map((_, f) => !(dexEntry.caughtAttr & scene.gameData.getFormAttr(f)))
+        .map((_, f) => !(dexEntry.caughtAttr & globalScene.gameData.getFormAttr(f)))
         .filter((f) => f).length;
 
       const allAbilityAttr = this.getAllAbilityAttr(getPokemonSpecies(species));
@@ -642,7 +569,7 @@ export class Mods {
   /**
    * Random Team generator
    */
-  generateRandomTeam(handler: StarterSelectUiHandler, scene: BattleScene, genSpecies: PokemonSpecies[][]) {
+  generateRandomTeam(handler: StarterSelectUiHandler, genSpecies: PokemonSpecies[][]) {
     const maxAttempts = 200;
 
     async function generateMon() {
@@ -656,7 +583,7 @@ export class Mods {
         }
 
         console.log("Loop:" + loop);
-        if (!species || !handler.tryUpdateValue(scene.gameData.getSpeciesStarterValue(species.speciesId))) {
+        if (!species || !handler.tryUpdateValue(globalScene.gameData.getSpeciesStarterValue(species.speciesId))) {
           continue;
         }
         handler.setGen(randomGenIndex);
@@ -671,7 +598,7 @@ export class Mods {
 
   /**
    * Weather UI
-   */
+
   updateWeatherText(scene: BattleScene) {
     console.log("Weather: " + scene.arena?.weather?.weatherType);
     if (scene.arena?.weather?.weatherType === undefined || scene.arena?.weather?.weatherType === WeatherType.NONE) {
@@ -742,14 +669,14 @@ export class Mods {
         return "No Terrain";
     }
   }
-
+  */
   /**
    * Cheat Menu
    */
-  showCheatMenu(scene: BattleScene, isPlayer: boolean, typeOptions: ModifierTypeOption[], modifierSelectCallback, rerollCost: number, party: Pokemon[]) {
-    const exit = () => scene.ui.setMode(Mode.MODIFIER_SELECT, isPlayer, typeOptions, modifierSelectCallback, rerollCost);
+  showCheatMenu(isPlayer: boolean, typeOptions: ModifierTypeOption[], modifierSelectCallback, rerollCost: number, party: Pokemon[]) {
+    const exit = () => globalScene.ui.setMode(Mode.MODIFIER_SELECT, isPlayer, typeOptions, modifierSelectCallback, rerollCost);
     const sceneSwap = (innerOptions) => exit().then(() => {
-      scene.ui.setModeWithoutClear(Mode.OPTION_SELECT, {
+      globalScene.ui.setModeWithoutClear(Mode.OPTION_SELECT, {
         options: innerOptions,
         maxOptions: 8,
         yOffset: 47,
@@ -758,11 +685,11 @@ export class Mods {
 
     const modifierCategories: Promise<ItemCategory[]> = this.createModifierCategories(party);
     modifierCategories.then((categories: ItemCategory[]) => {
-      this.createCheatOptions(categories, sceneSwap, exit, exit, scene);
+      this.createCheatOptions(categories, sceneSwap, exit, exit);
     });
   }
 
-  private createCheatOptions(categories: any[], sceneSwap: Function, exit: Function, cancelFunction: Function, scene: BattleScene) {
+  private createCheatOptions(categories: any[], sceneSwap: Function, exit: Function, cancelFunction: Function) {
     const options = [];
 
     const nextCancelFunction = () => sceneSwap(options);
@@ -771,14 +698,14 @@ export class Mods {
       if (item instanceof ItemCategory) {
         options.push({
           label: item.categoryName,
-          handler: () => this.createCheatOptions(item.array, sceneSwap, exit, nextCancelFunction, scene)
+          handler: () => this.createCheatOptions(item.array, sceneSwap, exit, nextCancelFunction)
         });
       } else {
         options.push({
           label: item.name,
           handler: () => {
             exit();
-            this.applyModifierType(item as ModifierType, scene, nextCancelFunction);
+            this.applyModifierType(item as ModifierType, nextCancelFunction);
           }
         });
       }
@@ -1020,15 +947,15 @@ export class Mods {
     sceneSwap(options);
   }
 
-  protected applyModifierType(modifierType: ModifierType, scene: BattleScene, cancelFunction: Function) {
-    const party = scene.getParty();
+  protected applyModifierType(modifierType: ModifierType, cancelFunction: Function) {
+    const party = globalScene.getPlayerParty();
     if (modifierType instanceof PokemonModifierType) {
       if (modifierType instanceof FusePokemonModifierType) {
-        scene.ui.setModeWithoutClear(Mode.PARTY, PartyUiMode.SPLICE, -1, (fromSlotIndex: integer, spliceSlotIndex: integer) => {
+        globalScene.ui.setModeWithoutClear(Mode.PARTY, PartyUiMode.SPLICE, -1, (fromSlotIndex: integer, spliceSlotIndex: integer) => {
           if (spliceSlotIndex !== undefined && fromSlotIndex < 6 && spliceSlotIndex < 6 && fromSlotIndex !== spliceSlotIndex) {
-            scene.ui.setMode(Mode.MODIFIER_SELECT, true).then(() => {
+            globalScene.ui.setMode(Mode.MODIFIER_SELECT, true).then(() => {
               const modifier = modifierType.newModifier(party[fromSlotIndex], party[spliceSlotIndex]);
-              scene.addModifier(modifier, false, true).then(() => cancelFunction());
+              globalScene.addModifier(modifier, false, true).then(() => cancelFunction());
             });
           } else {
             cancelFunction();
@@ -1048,9 +975,9 @@ export class Mods {
           ? (modifierType as TmModifierType).moveId
           : undefined;
         console.log("ID: " + tmMoveId);
-        scene.ui.setModeWithoutClear(Mode.PARTY, partyUiMode, -1, (slotIndex: integer, option: PartyOption) => {
+        globalScene.ui.setModeWithoutClear(Mode.PARTY, partyUiMode, -1, (slotIndex: integer, option: PartyOption) => {
           if (slotIndex < 6) {
-            scene.ui.setMode(Mode.MODIFIER_SELECT, true).then(() => {
+            globalScene.ui.setMode(Mode.MODIFIER_SELECT, true).then(() => {
               let modifier: Modifiers.Modifier;
               if (isMoveModifier) {
                 modifier = modifierType.newModifier(party[slotIndex], option - PartyOption.MOVE_1);
@@ -1059,7 +986,7 @@ export class Mods {
               } else {
                 modifier = modifierType.newModifier(party[slotIndex]);
               }
-              scene.addModifier(modifier, false, true).then(() => cancelFunction());
+              globalScene.addModifier(modifier, false, true);
             });
           } else {
             cancelFunction();
@@ -1067,10 +994,10 @@ export class Mods {
         }, pokemonModifierType.selectFilter, modifierType instanceof PokemonMoveModifierType ? (modifierType as PokemonMoveModifierType).moveSelectFilter : undefined, tmMoveId, isPpRestoreModifier);
       }
     } else {
-      scene.addModifier(modifierType.newModifier(), false, true, false, true).then(() => cancelFunction());
+      globalScene.addModifier(modifierType.newModifier(), false, true, false, true);
     }
   }
-
+  /**
   restartBattle(scene: BattleScene) {
 
     const cancel = () => scene.ui.setMode(Mode.COMMAND);
@@ -1105,7 +1032,9 @@ export class Mods {
       }, 0, false, 0);
     });
   }
+  */
 }
+
 
 class ItemCategory {
   categoryName: string;

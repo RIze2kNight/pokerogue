@@ -2,7 +2,7 @@
 #src/ui/starter-select-ui-handler.ts
 +      } else {
 -        error = true;
-        this.scene.mods.generateRandomTeam(this, this.scene, this.genSpecies);
+        globalScene.mods.generateRandomTeam(this, this.genSpecies);
         success = true;
 
 

@@ -1,4 +1,4 @@
 ~targu1n-EggSpeciesPitty
 #src/data/egg.ts
--    if (scene.gameData.unlockPity[this.tier] >= 9) {
-    if (scene.gameData.unlockPity[this.tier] >= scene.mods.eggSpeciesPitty) {
+-    if (globalScene.gameData.unlockPity[this.tier] >= 9) {
+    if (globalScene.gameData.unlockPity[this.tier] >= globalScene.mods.eggSpeciesPitty) {

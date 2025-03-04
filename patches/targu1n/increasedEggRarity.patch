@@ -1,7 +1,7 @@
 ~targu1n-IncreaseEggRarity
 #src/data/egg.ts
--    this._tier = eggOptions.tier ?? (Overrides.EGG_TIER_OVERRIDE ?? this.rollEggTier());
-    this._tier = eggOptions.tier ?? (Overrides.EGG_TIER_OVERRIDE ?? this.rollEggTier(eggOptions.scene.mods.overrideEggRarityIndex));
+-      this._tier = eggOptions?.tier ?? (Overrides.EGG_TIER_OVERRIDE ?? this.rollEggTier());
+      this._tier = eggOptions?.tier ?? (Overrides.EGG_TIER_OVERRIDE ?? this.rollEggTier(globalScene.mods.overrideEggRarityIndex));
 
 
 #src/data/egg.ts
@@ -11,6 +11,5 @@
 
 
 #src/data/egg.ts
--    return tierValue >= 52 + tierValueOffset ? EggTier.COMMON : tierValue >= 8 + tierValueOffset ? EggTier.GREAT : tierValue >= 1 + tierValueOffset ? EggTier.ULTRA : EggTier.MASTER;
-    return tierValue >= (52 + tierValueOffset)*mult ? EggTier.COMMON : tierValue >= (8 + tierValueOffset)*mult ? EggTier.GREAT : tierValue >= (1 + tierValueOffset)*mult ? EggTier.ULTRA : EggTier.MASTER;
-
+-    return tierValue >= GACHA_DEFAULT_COMMON_EGG_THRESHOLD + tierValueOffset ? EggTier.COMMON : tierValue >= GACHA_DEFAULT_RARE_EGG_THRESHOLD + tierValueOffset ? EggTier.RARE : tierValue >= GACHA_DEFAULT_EPIC_EGG_THRESHOLD + tierValueOffset ? EggTier.EPIC : EggTier.LEGENDARY;
+    return tierValue >= (GACHA_DEFAULT_COMMON_EGG_THRESHOLD + tierValueOffset)*mult ? EggTier.COMMON : tierValue >= (GACHA_DEFAULT_RARE_EGG_THRESHOLD + tierValueOffset)*mult ? EggTier.RARE : tierValue >= (GACHA_DEFAULT_EPIC_EGG_THRESHOLD + tierValueOffset)*mult ? EggTier.EPIC : EggTier.LEGENDARY;

@@ -1,55 +1,59 @@
 ~targu1n-CatchTrainerPokes
-#src/phases.ts
-+    const switchedPokemon = party[this.slotIndex];
-if(this.scene.currentBattle.battleType === BattleType.TRAINER && this.getPokemon().isFainted() && this.doReturn) return this.end();
+#src/phases/switch-summon-phase.ts
++    const switchedInPokemon = party[this.slotIndex];
+    if(globalScene.currentBattle.battleType === BattleType.TRAINER && this.getPokemon().isFainted() && this.doReturn) return this.end();
+
+#src/phases/switch-summon-phase.ts
++import { globalScene } from "#app/global-scene";
+import { BattleType } from "#app/battle";
+
+#src/phases/command-phase.ts
+-        } else if (globalScene.currentBattle.battleType === BattleType.TRAINER) {
+-          globalScene.ui.setMode(Mode.COMMAND, this.fieldIndex);
+        } else if (!globalScene.mods.catchTrainerPokemon && globalScene.currentBattle.battleType === BattleType.TRAINER) {
+          globalScene.ui.setMode(Mode.COMMAND, this.fieldIndex);
+
+#src/phases/command-phase.ts
++          const targets = globalScene.getEnemyField().filter(p => p.isActive(true)).map(p => p.getBattlerIndex());
+          const enemyPokemon = globalScene.getEnemyField().filter(p => p.isActive(true))[0];
+
+#src/phases/command-phase.ts
+-            }, null, true);
+-          } else if (cursor < 5) {
+            }, null, true);
+          } else if (globalScene.currentBattle.battleType === BattleType.TRAINER && globalScene.mods.catchTrainerPokemonRestrictions &&
+            (enemyPokemon.species.subLegendary || enemyPokemon.species.legendary || enemyPokemon.species.mythical || cursor < PokeballType.ROGUE_BALL)) {
+              globalScene.ui.setMode(Mode.COMMAND, this.fieldIndex);
+              globalScene.ui.setMode(Mode.MESSAGE);
+              let errorMessage: string
+              if(enemyPokemon.species.subLegendary || enemyPokemon.species.legendary || enemyPokemon.species.mythical) errorMessage = "You can't catch this Pokémon!"
+              else errorMessage = "You need a stronger Pokéball to catch another trainer's Pokémon!"
+              globalScene.ui.showText(errorMessage, null, () => {
+              globalScene.ui.showText(null, 0);
+              globalScene.ui.setMode(Mode.COMMAND, this.fieldIndex);
+            }, null, true);
+
+          } else if (cursor < 5) {
+
+#src/phases/attempt-capture-phase.ts
++import { BattlerIndex } from "#app/battle";
+import { BattleType } from "#app/battle";
+
+#src/phases/attempt-capture-phase.ts
+-        globalScene.unshiftPhase(new VictoryPhase(this.battlerIndex));
+        if(globalScene.currentBattle.battleType !== BattleType.TRAINER){
+          globalScene.unshiftPhase(new VictoryPhase(this.battlerIndex));
+        }
 
 
-#src/phases.ts
--      } else if (this.scene.currentBattle.battleType === BattleType.TRAINER) {
--        this.scene.ui.setMode(Mode.COMMAND, this.fieldIndex);
-      } else if (!this.scene.mods.catchTrainerPokemon && this.scene.currentBattle.battleType === BattleType.TRAINER) {
-        this.scene.ui.setMode(Mode.COMMAND, this.fieldIndex);
-
-
-#src/phases.ts
-+        const targets = this.scene.getEnemyField().filter(p => p.isActive(true)).map(p => p.getBattlerIndex());
-        const enemyPokemon = this.scene.getEnemyField().filter(p => p.isActive(true))[0]; 
-
-
-#src/phases.ts
--          }, null, true);
--        } else if (cursor < 5) {
-          }, null, true);
-        } else if (this.scene.currentBattle.battleType === BattleType.TRAINER && this.scene.mods.catchTrainerPokemonRestrictions && 
-          (enemyPokemon.species.subLegendary || enemyPokemon.species.legendary || enemyPokemon.species.mythical || cursor < PokeballType.ROGUE_BALL)) {
-            this.scene.ui.setMode(Mode.COMMAND, this.fieldIndex);
-            this.scene.ui.setMode(Mode.MESSAGE);
-            let errorMessage: string
-            if(enemyPokemon.species.subLegendary || enemyPokemon.species.legendary || enemyPokemon.species.mythical) errorMessage = "You can't catch this Pokémon!"
-            else errorMessage = "You need a stronger Pokéball to catch another trainer's Pokémon!"
-            this.scene.ui.showText(errorMessage, null, () => {
-            this.scene.ui.showText(null, 0);
-            this.scene.ui.setMode(Mode.COMMAND, this.fieldIndex);
-          }, null, true);
-
-        } else if (cursor < 5) {
-
-
-#src/phases.ts
--    this.scene.unshiftPhase(new VictoryPhase(this.scene, this.battlerIndex));
-    if(this.scene.currentBattle.battleType !== BattleType.TRAINER){
-      this.scene.unshiftPhase(new VictoryPhase(this.scene, this.battlerIndex));
-    }
-
-
-#src/phases.ts
+#src/phases/attempt-capture-phase.ts
 +      const removePokemon = () => {
-        if(this.scene.currentBattle.battleType === BattleType.TRAINER) return;
+        if(globalScene.currentBattle.battleType === BattleType.TRAINER) return;
 
-#src/phases.ts
+#src/phases/attempt-capture-phase.ts
 +        } else {
 +          addToParty();
 +        }
-        if(this.scene.currentBattle.battleType === BattleType.TRAINER) pokemon.damage(pokemon.hp, true, true);
+        if(globalScene.currentBattle.battleType === BattleType.TRAINER) pokemon.damage(pokemon.hp, true, true);
 
 

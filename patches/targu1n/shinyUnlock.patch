@@ -5,11 +5,11 @@
 +              });
 +            }
             const hasAllVariants = (attr: bigint) => (attr & DexAttr.VARIANT_3) && (attr & DexAttr.VARIANT_2) && (attr & DexAttr.SHINY);
-            if(!hasAllVariants(this.scene.gameData.dexData[this.lastSpecies.speciesId].caughtAttr)){
+            if(!hasAllVariants(globalScene.gameData.dexData[this.lastSpecies.speciesId].caughtAttr)){
               options.push({
                 label: "Unlock Shinies",
                 handler: () => {
-                  ui.setMode(Mode.STARTER_SELECT).then(() => this.scene.mods.showShiniesUnlock(this.scene, ui, this.lastSpecies, candyCount, this, this.pokemonCandyCountText));
+                  ui.setMode(Mode.STARTER_SELECT).then(() => globalScene.mods.showShiniesUnlock(ui, this.lastSpecies, candyCount, this, this.pokemonCandyCountText));
                   return true;
                 }
               });

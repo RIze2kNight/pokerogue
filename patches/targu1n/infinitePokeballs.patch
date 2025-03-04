@@ -1,4 +1,4 @@
 ~targu1n-InfinitePokeballs
 #src/ui/ball-ui-handler.ts
--        if (this.scene.pokeballCounts[this.cursor]) {
-        if (this.scene.pokeballCounts[this.cursor] > 0 || this.scene.mods.infiniteBalls) {
+-        if (globalScene.pokeballCounts[this.cursor]) {
+        if (globalScene.pokeballCounts[this.cursor] > 0 || globalScene.mods.infiniteBalls) {

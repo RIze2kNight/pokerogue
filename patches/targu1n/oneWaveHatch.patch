@@ -1,4 +1,4 @@
 ~targu1n-OneWaveHatch
-#src/phases.ts
+#src/phases/egg-lapse-phase.ts
 -      return Overrides.EGG_IMMEDIATE_HATCH_OVERRIDE ? true : --egg.hatchWaves < 1;
-      return Overrides.EGG_IMMEDIATE_HATCH_OVERRIDE || this.scene.mods.overrideEggHatchWaves? true : --egg.hatchWaves < 1;
+      return Overrides.EGG_IMMEDIATE_HATCH_OVERRIDE || globalScene.mods.overrideEggHatchWaves? true : --egg.hatchWaves < 1;
