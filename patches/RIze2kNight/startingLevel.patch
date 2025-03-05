@@ -1,0 +1,41 @@
+~rize2knight-StartingLevel
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public startingLevel: number = 5; //RIze2kNight Mod
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+
+  STARTING_LEVEL: "STARTING_LEVEL", //RIze2kNight Mod
+
+#src/system/settings/mod-settings.ts
++export const ModSetting: Array<Setting> = [
+  {
+    key: SettingKeys.STARTING_LEVEL,
+    label: "Starting Level",
+    options: [
+      {value: "0", label: "Off"},
+      {value: "1", label: "1"},
+      {value: "5", label: "5"},
+      {value: "10", label: "10"},
+      {value: "20", label: "20"},
+    ],
+    default: 1,
+    type: null
+  },
+
+#src/system/settings/mod-settings.ts
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+  
+    //RIze2kNight Mod
+    case SettingKeys.STARTING_LEVEL:
+      globalScene.mods.startingLevel = parseInt(ModSetting[index].options[value].value);
+      break;
+
+#src/game-mode.ts
++  getStartingLevel(): number {
+    if (globalScene.mods.startingLevel != 0) { return globalScene.mods.startingLevel; }     //RIze2kNight Mod

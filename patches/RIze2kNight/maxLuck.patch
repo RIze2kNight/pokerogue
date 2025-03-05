@@ -1,0 +1,34 @@
+~rize2knight-MaxLuck
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public maxLuck: boolean = false; //RIze2kNight
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+  MAX_LUCK: "MAX_LUCK", //RIze2kNight Mod
+
+#src/system/settings/mod-settings.ts
++export const ModSetting: Array<Setting> = [
+  {
+    key: SettingKeys.MAX_LUCK,
+    label: "Max Luck",
+    options: OFF_ON,
+    default: 0,
+    type: null
+  },
+
+#src/system/settings/mod-settings.ts
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+
+    //RIze2kNight Mod
+    case SettingKeys.MAX_LUCK:
+      globalScene.mods.maxLuck = ModSetting[index].options[value].value === "On";
+      break;
+
+#src/modifier/modifier-type.ts
++export function getPartyLuckValue(party: Pokemon[]): number {
+  if(globalScene.mods.maxLuck) { return 14; }   // RIze2kNight Modded

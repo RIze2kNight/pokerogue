@@ -1,0 +1,16 @@
+~rize2knight-IncreaseGachaShiny
+#src/data/egg.ts
+-      this._isShiny = eggOptions?.isShiny ?? (Overrides.EGG_SHINY_OVERRIDE || this.rollShiny());
+      this._isShiny = eggOptions?.isShiny ?? (Overrides.EGG_SHINY_OVERRIDE || this.rollShiny(globalScene.mods.shinyModifier));
+
+#src/data/egg.ts
+-        this._isShiny = this.rollShiny();
+        this._isShiny = this.rollShiny(globalScene.mods.shinyModifier);
+
+#src/data/egg.ts
+-  private rollShiny(): boolean {
+  private rollShiny(mult?: number): boolean {
+
+#src/data/egg.ts
+-    return !Utils.randSeedInt(shinyChance);
+    return !Utils.randSeedInt(shinyChance / mult);

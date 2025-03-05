@@ -1,0 +1,41 @@
+~rize2knight-VitaminTransfer
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public vitaminTransfer: boolean = false; //RIze2kNight
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+  VITAMIN_TRANSFER: "VITAMIN_TRANSFER", //RIze2kNight Mod
+
+#src/system/settings/mod-settings.ts
++    default: 0,
++    type: null
++  },
+  {
+    key: SettingKeys.VITAMIN_TRANSFER,
+    label: "Vitamin Transfer",
+    options: OFF_ON,
+    default: 0,
+    type: null
+  },
+*
+
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+  
+    //RIze2kNight Mod
+    case SettingKeys.VITAMIN_TRANSFER:
+      globalScene.mods.vitaminTransfer = ModSetting[index].options[value].value === "On";
+      break;
+
+#src/modifier/modifier.ts
++  protected stat: PermanentStat;
+-  public isTransferable: boolean = false;
+  public isTransferable: boolean = globalScene.mods.vitaminTransfer;    //RIze2kNight Mod
+
+#src/ui/party-ui-handler.ts
+-        if (this.transferQuantitiesMax[option] === itemModifier.getMaxHeldItemCount(undefined)) {
+        if (this.transferQuantitiesMax[option] === itemModifier.getMaxHeldItemCount(pokemon)) {     //RIze2kNight Mod

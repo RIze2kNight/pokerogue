@@ -1,0 +1,53 @@
+~rize2knight-PandemicMode
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public pandemicMode: boolean = false; //RIze2kNight
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+  PANDEMIC_MODE: "PANDEMIC_MODE", //RIze2kNight Mod
+*
+
++    default: 0,
++    type: null
++  },
+  {
+    key: SettingKeys.PANDEMIC_MODE,
+    label: "Pandemic Mode",
+    options: OFF_ON,
+    default: 0,
+    requireReload: true,
+    type: null
+  },
+*
+
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+
+    //RIze2kNight Mod
+    case SettingKeys.PANDEMIC_MODE:
+      globalScene.mods.pandemicMode = ModSetting[index].options[value].value === "On";
+      break;
+
+#src/ui/starter-select-ui-handler.ts
+-    this.pokerusCursorObjs = new Array(POKERUS_STARTER_COUNT).fill(null).map(() => {
+    this.pokerusCursorObjs = new Array(globalScene.mods.pandemicMode? 5e3 : POKERUS_STARTER_COUNT).fill(null).map(() => {    // RIze2kNight Modded
+
+#src/ui/pokedex-ui-handler.ts
+-    this.pokerusCursorObjs = new Array(POKERUS_STARTER_COUNT).fill(null).map(() => {
+    this.pokerusCursorObjs = new Array(globalScene.mods.pandemicMode? 5e3 : POKERUS_STARTER_COUNT).fill(null).map(() => {    // RIze2kNight Modded
+
+#src/data/pokemon-species.ts
++export function getPokerusStarters(): PokemonSpecies[] {
+const pokerusAmnt = globalScene.mods.pandemicMode? 5e3 : POKERUS_STARTER_COUNT;     // RIze2kNight Modded
+*
+
+-    while (pokerusStarters.length < POKERUS_STARTER_COUNT) {
+    for(let i = 0; i < pokerusAmnt; i++) {      // RIze2kNight Modded
+*
+
+-        pokerusStarters.push(species);
+        pokerusStarters[i] = species ;

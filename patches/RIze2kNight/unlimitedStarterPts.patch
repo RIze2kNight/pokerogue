@@ -1,0 +1,36 @@
+~rize2knight-UnlimitedStarterPts
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public unlimitedStarterPts: boolean = false; //RIze2kNight
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+  UNLIMITED_STARTER_POINTS: "UNLIMITED_STARTER_POINTS", //RIze2kNight Mod
+*
+
++    default: 0,
++    type: null
++  },
+  {
+    key: SettingKeys.UNLIMITED_STARTER_POINTS,
+    label: "Unlimited Starter Points",
+    options: OFF_ON,
+    default: 0,
+    type: null
+  },
+*
+
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+
+    //RIze2kNight Mod
+    case SettingKeys.UNLIMITED_STARTER_POINTS:
+      globalScene.mods.unlimitedStarterPts = ModSetting[index].options[value].value === "On";
+      break;
+
+#src/ui/starter-select-ui-handler.ts
++    Challenge.applyChallenges(globalScene.gameMode, Challenge.ChallengeType.STARTER_POINTS, valueLimit);
+    if (globalScene.mods.unlimitedStarterPts) { valueLimit.value = 60 ; }   // RIze2kNight Modded

@@ -1,0 +1,34 @@
+~rize2knight-ToggleLockCapsule
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public toggleLockCapsule: boolean = false; //RIze2kNight Mod
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+  TOGGLE_LOCK_CAPSULE: "TOGGLE_LOCK_CAPSULE", //RIze2kNight Mod
+
+#src/system/settings/mod-settings.ts
++export const ModSetting: Array<Setting> = [
+  {
+    key: SettingKeys.TOGGLE_LOCK_CAPSULE,
+    label: "Lock Capsule",
+    options: OFF_ON,
+    default: 0,
+    type: null
+  },
+
+#src/system/settings/mod-settings.ts
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+  
+    //RIze2kNight Mod
+    case SettingKeys.TOGGLE_LOCK_CAPSULE:
+      globalScene.mods.toggleLockCapsule = ModSetting[index].options[value].value === "On";
+      break;
+
+#src\ui\modifier-select-ui-handler.ts
+-    const canLockRarities = !!globalScene.findModifier(m => m instanceof LockModifierTiersModifier);
+    const canLockRarities = globalScene.mods.toggleLockCapsule? true : !!globalScene.findModifier(m => m instanceof LockModifierTiersModifier);

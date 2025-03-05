@@ -1,0 +1,61 @@
+~rize2knight-FormChangeRarity
+#src/mods.ts
++  public regenPokeChance: number = 0;
+
+  public formChangeRarity: boolean = false; //RIze2kNight
+
+#src/system/settings/mod-settings.ts
++  REGEN_POKEMON: "REGEN_POKEMON", //Done
+
+  FORM_CHANGE_RARITY: "FORM_CHANGE_RARITY", //RIze2kNight Mod
+*
+
++    default: 0,
++    type: null
++  },
+  {
+    key: SettingKeys.FORM_CHANGE_RARITY,
+    label: "Form Change Rarity",
+    options: [
+      {value: "0", label: "Default"},
+      {value: "1", label: "Rebalanced"},
+    ],
+    default: 1,
+    type: null
+  },
+*
+
++    case SettingKeys.REGEN_POKEMON:
++      globalScene.mods.regenPokeChance = parseInt(ModSetting[index].options[value].value);
++      break;
+
+    //RIze2kNight Mod
+    case SettingKeys.FORM_CHANGE_RARITY:
+      const formChangeCheck = parseInt(ModSetting[index].options[value].value);
+      globalScene.mods.formChangeRarity = formChangeCheck === 1;
+      break;
+
+#src/modifier/modifier-type.ts
+-        if (globalScene.gameMode.isSplicedOnly) {
+        if (globalScene.gameMode.isSplicedOnly || globalScene.mods.formChangeRarity) {
+
+*
+
++    new WeightedModifierType(modifierTypes.WIDE_LENS, 7),
+    new WeightedModifierType(modifierTypes.RARE_FORM_CHANGE_ITEM, () => globalScene.mods.formChangeRarity ? Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 6 : 0, 24),
+    new WeightedModifierType(modifierTypes.MEGA_BRACELET, () => globalScene.mods.formChangeRarity ? Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9 : 0, 36),
+    new WeightedModifierType(modifierTypes.DYNAMAX_BAND, () => globalScene.mods.formChangeRarity ? Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9 : 0, 36),
+*
+
+-    new WeightedModifierType(modifierTypes.SUPER_EXP_CHARM, skipInLastClassicWaveOrDefault(8)),
+-    new WeightedModifierType(modifierTypes.RARE_FORM_CHANGE_ITEM, () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 6, 24),
+-    new WeightedModifierType(modifierTypes.MEGA_BRACELET, () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9, 36),
+-    new WeightedModifierType(modifierTypes.DYNAMAX_BAND, () => Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9, 36),
+    new WeightedModifierType(modifierTypes.SUPER_EXP_CHARM, skipInLastClassicWaveOrDefault(8)),
+    new WeightedModifierType(modifierTypes.RARE_FORM_CHANGE_ITEM, () => !globalScene.mods.formChangeRarity ? Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 6 : 0, 24),
+    new WeightedModifierType(modifierTypes.MEGA_BRACELET, () => !globalScene.mods.formChangeRarity ? Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9 : 0, 36),
+    new WeightedModifierType(modifierTypes.DYNAMAX_BAND, () => !globalScene.mods.formChangeRarity ? Math.min(Math.ceil(globalScene.currentBattle.waveIndex / 50), 4) * 9 : 0, 36),
+*
+
+-    new WeightedModifierType(modifierTypes.DNA_SPLICERS, (party: Pokemon[]) => !(globalScene.gameMode.isClassic && globalScene.eventManager.areFusionsBoosted()) && !globalScene.gameMode.isSplicedOnly && party.filter(p => !p.fusionSpecies).length > 1 ? 24 : 0, 24),
+    new WeightedModifierType(modifierTypes.DNA_SPLICERS, (party: Pokemon[]) => (globalScene.mods.formChangeRarity || !(globalScene.gameMode.isClassic && globalScene.eventManager.areFusionsBoosted())) && !globalScene.gameMode.isSplicedOnly && party.filter(p => !p.fusionSpecies).length > 1 ? 24 : 0, 24),

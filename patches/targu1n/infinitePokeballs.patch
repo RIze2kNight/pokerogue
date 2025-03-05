@@ -2,3 +2,7 @@
 #src/ui/ball-ui-handler.ts
 -        if (globalScene.pokeballCounts[this.cursor]) {
         if (globalScene.pokeballCounts[this.cursor] > 0 || globalScene.mods.infiniteBalls) {
+
+#src/phases/attempt-capture-phase.ts
+-    globalScene.pokeballCounts[this.pokeballType]--;
+    if(!globalScene.mods.infiniteBalls) { globalScene.pokeballCounts[this.pokeballType]--; }
