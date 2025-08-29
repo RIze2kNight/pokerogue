@@ -1,25 +1,37 @@
-import { Biome } from "#app/enums/biome";
-import { MysteryEncounterType } from "#app/enums/mystery-encounter-type";
-import { Species } from "#app/enums/species";
-import GameManager from "#test/testUtils/gameManager";
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import * as EncounterPhaseUtils from "#app/data/mystery-encounters/utils/encounter-phase-utils";
-import { runMysteryEncounterToEnd, runSelectMysteryEncounterOption } from "#test/mystery-encounter/encounter-test-utils";
-import type BattleScene from "#app/battle-scene";
+import type { BattleScene } from "#app/battle-scene";
+import { modifierTypes } from "#data/data-lists";
+import { BerryType } from "#enums/berry-type";
+import { BiomeId } from "#enums/biome-id";
 import { MysteryEncounterOptionMode } from "#enums/mystery-encounter-option-mode";
 import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
-import { DelibirdyEncounter } from "#app/data/mystery-encounters/encounters/delibirdy-encounter";
-import * as MysteryEncounters from "#app/data/mystery-encounters/mystery-encounters";
-import type { MoneyRequirement } from "#app/data/mystery-encounters/mystery-encounter-requirements";
-import { BerryModifier, HealingBoosterModifier, HitHealModifier, LevelIncrementBoosterModifier, MoneyMultiplierModifier, PokemonInstantReviveModifier, PokemonNatureWeightModifier, PreserveBerryModifier } from "#app/modifier/modifier";
-import { MysteryEncounterPhase } from "#app/phases/mystery-encounter-phases";
-import { generateModifierType } from "#app/data/mystery-encounters/utils/encounter-phase-utils";
-import { modifierTypes } from "#app/modifier/modifier-type";
-import { BerryType } from "#enums/berry-type";
+import { MysteryEncounterType } from "#enums/mystery-encounter-type";
+import { SpeciesId } from "#enums/species-id";
+import {
+  BerryModifier,
+  HealingBoosterModifier,
+  HitHealModifier,
+  LevelIncrementBoosterModifier,
+  MoneyMultiplierModifier,
+  PokemonInstantReviveModifier,
+  PokemonNatureWeightModifier,
+  PreserveBerryModifier,
+} from "#modifiers/modifier";
+import { DelibirdyEncounter } from "#mystery-encounters/delibirdy-encounter";
+import * as EncounterPhaseUtils from "#mystery-encounters/encounter-phase-utils";
+import { generateModifierType } from "#mystery-encounters/encounter-phase-utils";
+import type { MoneyRequirement } from "#mystery-encounters/mystery-encounter-requirements";
+import * as MysteryEncounters from "#mystery-encounters/mystery-encounters";
+import { MysteryEncounterPhase } from "#phases/mystery-encounter-phases";
+import {
+  runMysteryEncounterToEnd,
+  runSelectMysteryEncounterOption,
+} from "#test/mystery-encounter/encounter-test-utils";
+import { GameManager } from "#test/test-utils/game-manager";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const namespace = "mysteryEncounters/delibirdy";
-const defaultParty = [ Species.LAPRAS, Species.GENGAR, Species.ABRA ];
-const defaultBiome = Biome.CAVE;
+const defaultParty = [SpeciesId.LAPRAS, SpeciesId.GENGAR, SpeciesId.ABRA];
+const defaultBiome = BiomeId.CAVE;
 const defaultWave = 45;
 
 describe("Delibird-y - Mystery Encounter", () => {
@@ -34,22 +46,19 @@ describe("Delibird-y - Mystery Encounter", () => {
   beforeEach(async () => {
     game = new GameManager(phaserGame);
     scene = game.scene;
-    game.override.mysteryEncounterChance(100);
-    game.override.startingWave(defaultWave);
-    game.override.startingBiome(defaultBiome);
-    game.override.disableTrainerWaves();
+    game.override
+      .mysteryEncounterChance(100)
+      .startingWave(defaultWave)
+      .startingBiome(defaultBiome)
+      .disableTrainerWaves();
 
     vi.spyOn(MysteryEncounters, "mysteryEncountersByBiome", "get").mockReturnValue(
-      new Map<Biome, MysteryEncounterType[]>([
-        [ Biome.CAVE, [ MysteryEncounterType.DELIBIRDY ]],
-      ])
+      new Map<BiomeId, MysteryEncounterType[]>([[BiomeId.CAVE, [MysteryEncounterType.DELIBIRDY]]]),
     );
   });
 
   afterEach(() => {
     game.phaseInterceptor.restoreOg();
-    vi.clearAllMocks();
-    vi.resetAllMocks();
   });
 
   it("should have the correct properties", async () => {
@@ -98,7 +107,8 @@ describe("Delibird-y - Mystery Encounter", () => {
       await game.runToMysteryEncounter(MysteryEncounterType.DELIBIRDY, defaultParty);
       await runMysteryEncounterToEnd(game, 1);
 
-      const price = (scene.currentBattle.mysteryEncounter?.options[0].requirements[0] as MoneyRequirement).requiredMoney;
+      const price = (scene.currentBattle.mysteryEncounter?.options[0].requirements[0] as MoneyRequirement)
+        .requiredMoney;
 
       expect(updateMoneySpy).toHaveBeenCalledWith(-price, true, false);
       expect(scene.money).toBe(initialMoney - price);
@@ -142,7 +152,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       await game.runToMysteryEncounter(MysteryEncounterType.DELIBIRDY, defaultParty);
       await game.phaseInterceptor.to(MysteryEncounterPhase, false);
 
-      const encounterPhase = scene.getCurrentPhase();
+      const encounterPhase = scene.phaseManager.getCurrentPhase();
       expect(encounterPhase?.constructor.name).toBe(MysteryEncounterPhase.name);
       const mysteryEncounterPhase = encounterPhase as MysteryEncounterPhase;
       vi.spyOn(mysteryEncounterPhase, "continueEncounter");
@@ -151,7 +161,7 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       await runSelectMysteryEncounterOption(game, 1);
 
-      expect(scene.getCurrentPhase()?.constructor.name).toBe(MysteryEncounterPhase.name);
+      expect(scene.phaseManager.getCurrentPhase()?.constructor.name).toBe(MysteryEncounterPhase.name);
       expect(scene.ui.playError).not.toHaveBeenCalled(); // No error sfx, option is disabled
       expect(mysteryEncounterPhase.handleOptionSelect).not.toHaveBeenCalled();
       expect(mysteryEncounterPhase.continueEncounter).not.toHaveBeenCalled();
@@ -176,7 +186,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       expect(option.dialogue).toStrictEqual({
         buttonLabel: `${namespace}:option.2.label`,
         buttonTooltip: `${namespace}:option.2.tooltip`,
-        secondOptionPrompt: `${namespace}:option.2.select_prompt`,
+        secondOptionPrompt: `${namespace}:option.2.selectPrompt`,
         selected: [
           {
             text: `${namespace}:option.2.selected`,
@@ -190,8 +200,8 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       // Set 2 Sitrus berries on party lead
       scene.modifiers = [];
-      const sitrus = generateModifierType(modifierTypes.BERRY, [ BerryType.SITRUS ])!;
-      const sitrusMod = sitrus.newModifier(scene.getPlayerParty()[0]) as BerryModifier;
+      const sitrus = generateModifierType(modifierTypes.BERRY, [BerryType.SITRUS])!;
+      const sitrusMod = sitrus.newModifier(game.field.getPlayerPokemon()) as BerryModifier;
       sitrusMod.stackCount = 2;
       scene.addModifier(sitrusMod, true, false, false, true);
       await scene.updateModifiers(true);
@@ -212,7 +222,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       // Set 1 Reviver Seed on party lead
       scene.modifiers = [];
       const revSeed = generateModifierType(modifierTypes.REVIVER_SEED)!;
-      const modifier = revSeed.newModifier(scene.getPlayerParty()[0]) as PokemonInstantReviveModifier;
+      const modifier = revSeed.newModifier(game.field.getPlayerPokemon()) as PokemonInstantReviveModifier;
       modifier.stackCount = 1;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
@@ -235,10 +245,10 @@ describe("Delibird-y - Mystery Encounter", () => {
       const candyJar = generateModifierType(modifierTypes.CANDY_JAR)!.newModifier() as LevelIncrementBoosterModifier;
       candyJar.stackCount = 99;
       scene.addModifier(candyJar, true, false, false, true);
-      const sitrus = generateModifierType(modifierTypes.BERRY, [ BerryType.SITRUS ])!;
+      const sitrus = generateModifierType(modifierTypes.BERRY, [BerryType.SITRUS])!;
 
       // Sitrus berries on party
-      const sitrusMod = sitrus.newModifier(scene.getPlayerParty()[0]) as BerryModifier;
+      const sitrusMod = sitrus.newModifier(game.field.getPlayerPokemon()) as BerryModifier;
       sitrusMod.stackCount = 2;
       scene.addModifier(sitrusMod, true, false, false, true);
       await scene.updateModifiers(true);
@@ -267,7 +277,7 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       // Set 1 Reviver Seed on party lead
       const revSeed = generateModifierType(modifierTypes.REVIVER_SEED)!;
-      const modifier = revSeed.newModifier(scene.getPlayerParty()[0]) as PokemonInstantReviveModifier;
+      const modifier = revSeed.newModifier(game.field.getPlayerPokemon()) as PokemonInstantReviveModifier;
       modifier.stackCount = 1;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
@@ -291,13 +301,13 @@ describe("Delibird-y - Mystery Encounter", () => {
       // Set 1 Soul Dew on party lead
       scene.modifiers = [];
       const soulDew = generateModifierType(modifierTypes.SOUL_DEW)!;
-      const modifier = soulDew.newModifier(scene.getPlayerParty()[0]);
+      const modifier = soulDew.newModifier(game.field.getPlayerPokemon());
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
 
       await game.phaseInterceptor.to(MysteryEncounterPhase, false);
 
-      const encounterPhase = scene.getCurrentPhase();
+      const encounterPhase = scene.phaseManager.getCurrentPhase();
       expect(encounterPhase?.constructor.name).toBe(MysteryEncounterPhase.name);
       const mysteryEncounterPhase = encounterPhase as MysteryEncounterPhase;
       vi.spyOn(mysteryEncounterPhase, "continueEncounter");
@@ -306,7 +316,7 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       await runSelectMysteryEncounterOption(game, 2);
 
-      expect(scene.getCurrentPhase()?.constructor.name).toBe(MysteryEncounterPhase.name);
+      expect(scene.phaseManager.getCurrentPhase()?.constructor.name).toBe(MysteryEncounterPhase.name);
       expect(scene.ui.playError).not.toHaveBeenCalled(); // No error sfx, option is disabled
       expect(mysteryEncounterPhase.handleOptionSelect).not.toHaveBeenCalled();
       expect(mysteryEncounterPhase.continueEncounter).not.toHaveBeenCalled();
@@ -319,7 +329,7 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       // Set 1 Reviver Seed on party lead
       const revSeed = generateModifierType(modifierTypes.REVIVER_SEED)!;
-      const modifier = revSeed.newModifier(scene.getPlayerParty()[0]) as PokemonInstantReviveModifier;
+      const modifier = revSeed.newModifier(game.field.getPlayerPokemon()) as PokemonInstantReviveModifier;
       modifier.stackCount = 1;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
@@ -338,7 +348,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       expect(option.dialogue).toStrictEqual({
         buttonLabel: `${namespace}:option.3.label`,
         buttonTooltip: `${namespace}:option.3.tooltip`,
-        secondOptionPrompt: `${namespace}:option.3.select_prompt`,
+        secondOptionPrompt: `${namespace}:option.3.selectPrompt`,
         selected: [
           {
             text: `${namespace}:option.3.selected`,
@@ -353,7 +363,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       // Set 2 Soul Dew on party lead
       scene.modifiers = [];
       const soulDew = generateModifierType(modifierTypes.SOUL_DEW)!;
-      const modifier = soulDew.newModifier(scene.getPlayerParty()[0]) as PokemonNatureWeightModifier;
+      const modifier = soulDew.newModifier(game.field.getPlayerPokemon()) as PokemonNatureWeightModifier;
       modifier.stackCount = 2;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
@@ -374,7 +384,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       // Set 1 Soul Dew on party lead
       scene.modifiers = [];
       const soulDew = generateModifierType(modifierTypes.SOUL_DEW)!;
-      const modifier = soulDew.newModifier(scene.getPlayerParty()[0]) as PokemonNatureWeightModifier;
+      const modifier = soulDew.newModifier(game.field.getPlayerPokemon()) as PokemonNatureWeightModifier;
       modifier.stackCount = 1;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
@@ -400,7 +410,7 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       // Set 1 Soul Dew on party lead
       const soulDew = generateModifierType(modifierTypes.SOUL_DEW)!;
-      const modifier = soulDew.newModifier(scene.getPlayerParty()[0]) as PokemonNatureWeightModifier;
+      const modifier = soulDew.newModifier(game.field.getPlayerPokemon()) as PokemonNatureWeightModifier;
       modifier.stackCount = 1;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
@@ -424,13 +434,13 @@ describe("Delibird-y - Mystery Encounter", () => {
       // Set 1 Reviver Seed on party lead
       scene.modifiers = [];
       const revSeed = generateModifierType(modifierTypes.REVIVER_SEED)!;
-      const modifier = revSeed.newModifier(scene.getPlayerParty()[0]);
+      const modifier = revSeed.newModifier(game.field.getPlayerPokemon());
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);
 
       await game.phaseInterceptor.to(MysteryEncounterPhase, false);
 
-      const encounterPhase = scene.getCurrentPhase();
+      const encounterPhase = scene.phaseManager.getCurrentPhase();
       expect(encounterPhase?.constructor.name).toBe(MysteryEncounterPhase.name);
       const mysteryEncounterPhase = encounterPhase as MysteryEncounterPhase;
       vi.spyOn(mysteryEncounterPhase, "continueEncounter");
@@ -439,7 +449,7 @@ describe("Delibird-y - Mystery Encounter", () => {
 
       await runSelectMysteryEncounterOption(game, 3);
 
-      expect(scene.getCurrentPhase()?.constructor.name).toBe(MysteryEncounterPhase.name);
+      expect(scene.phaseManager.getCurrentPhase()?.constructor.name).toBe(MysteryEncounterPhase.name);
       expect(scene.ui.playError).not.toHaveBeenCalled(); // No error sfx, option is disabled
       expect(mysteryEncounterPhase.handleOptionSelect).not.toHaveBeenCalled();
       expect(mysteryEncounterPhase.continueEncounter).not.toHaveBeenCalled();
@@ -453,7 +463,7 @@ describe("Delibird-y - Mystery Encounter", () => {
       // Set 1 Soul Dew on party lead
       scene.modifiers = [];
       const soulDew = generateModifierType(modifierTypes.SOUL_DEW)!;
-      const modifier = soulDew.newModifier(scene.getPlayerParty()[0]) as PokemonNatureWeightModifier;
+      const modifier = soulDew.newModifier(game.field.getPlayerPokemon()) as PokemonNatureWeightModifier;
       modifier.stackCount = 1;
       scene.addModifier(modifier, true, false, false, true);
       await scene.updateModifiers(true);

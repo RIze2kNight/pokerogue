@@ -1,13 +1,14 @@
-import { addTextObject, TextStyle } from "./text";
-import i18next from "i18next";
-import * as Utils from "#app/utils";
 import { globalScene } from "#app/global-scene";
+import { TextStyle } from "#enums/text-style";
+import { addTextObject } from "#ui/text";
+import { toCamelCase, toTitleCase } from "#utils/strings";
+import i18next from "i18next";
 
 const hiddenX = -150;
 const shownX = 0;
 const baseY = 0;
 
-export default class BgmBar extends Phaser.GameObjects.Container {
+export class BgmBar extends Phaser.GameObjects.Container {
   private defaultWidth: number;
   private defaultHeight: number;
 
@@ -24,7 +25,18 @@ export default class BgmBar extends Phaser.GameObjects.Container {
     this.defaultWidth = 230;
     this.defaultHeight = 100;
 
-    this.bg = globalScene.add.nineslice(-5, -5, "bgm_bar", undefined, this.defaultWidth, this.defaultHeight, 0, 0, 10, 10);
+    this.bg = globalScene.add.nineslice(
+      -5,
+      -5,
+      "bgm_bar",
+      undefined,
+      this.defaultWidth,
+      this.defaultHeight,
+      0,
+      0,
+      10,
+      10,
+    );
     this.bg.setOrigin(0, 0);
 
     this.add(this.bg);
@@ -40,8 +52,8 @@ export default class BgmBar extends Phaser.GameObjects.Container {
   }
 
   /*
-    * Set the BGM Name to the BGM bar.
-    * @param {string} bgmName The name of the BGM to set.
+   * Set the BGM Name to the BGM bar.
+   * @param {string} bgmName The name of the BGM to set.
    */
   setBgmToBgmBar(bgmName: string): void {
     this.musicText.setText(`${i18next.t("bgmName:music")}${this.getRealBgmName(bgmName)}`);
@@ -83,11 +95,13 @@ export default class BgmBar extends Phaser.GameObjects.Container {
       ease: "Sine.easeInOut",
       onComplete: () => {
         this.setVisible(true);
-      }
+      },
     });
   }
 
   getRealBgmName(bgmName: string): string {
-    return i18next.t([ `bgmName:${bgmName}`, "bgmName:missing_entries" ], { name: Utils.formatText(bgmName) });
+    return i18next.t([`bgmName:${toCamelCase(bgmName)}`, "bgmName:missingEntries"], {
+      name: toTitleCase(bgmName),
+    });
   }
 }

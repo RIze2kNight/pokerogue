@@ -1,9 +1,9 @@
+import { AbilityId } from "#enums/ability-id";
+import { MoveId } from "#enums/move-id";
+import { SpeciesId } from "#enums/species-id";
 import { Stat } from "#enums/stat";
-import { TurnInitPhase } from "#app/phases/turn-init-phase";
-import { Abilities } from "#enums/abilities";
-import { Moves } from "#enums/moves";
-import { Species } from "#enums/species";
-import GameManager from "#test/testUtils/gameManager";
+import { TurnInitPhase } from "#phases/turn-init-phase";
+import { GameManager } from "#test/test-utils/game-manager";
 import Phaser from "phaser";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
@@ -24,19 +24,20 @@ describe("Abilities - Competitive", () => {
   beforeEach(() => {
     game = new GameManager(phaserGame);
 
-    game.override.battleType("single")
-      .enemySpecies(Species.BEEDRILL)
-      .enemyMoveset(Moves.TICKLE)
+    game.override
+      .battleStyle("single")
+      .enemySpecies(SpeciesId.BEEDRILL)
+      .enemyMoveset(MoveId.TICKLE)
       .startingLevel(1)
-      .moveset([ Moves.SPLASH, Moves.CLOSE_COMBAT ])
-      .ability(Abilities.COMPETITIVE);
+      .moveset([MoveId.SPLASH, MoveId.CLOSE_COMBAT])
+      .ability(AbilityId.COMPETITIVE);
   });
 
   it("lower atk and def by 1 via tickle, then increase spatk by 4 via competitive", async () => {
-    await game.classicMode.startBattle([ Species.FLYGON ]);
+    await game.classicMode.startBattle([SpeciesId.FLYGON]);
 
-    const playerPokemon = game.scene.getPlayerPokemon()!;
-    game.move.select(Moves.SPLASH);
+    const playerPokemon = game.field.getPlayerPokemon();
+    game.move.select(MoveId.SPLASH);
     await game.phaseInterceptor.to(TurnInitPhase);
 
     expect(playerPokemon.getStatStage(Stat.ATK)).toBe(-1);
@@ -45,11 +46,11 @@ describe("Abilities - Competitive", () => {
   });
 
   it("lowering your own stats should not trigger competitive", async () => {
-    game.override.enemyMoveset(Moves.SPLASH);
-    await game.classicMode.startBattle([ Species.FLYGON ]);
+    game.override.enemyMoveset(MoveId.SPLASH);
+    await game.classicMode.startBattle([SpeciesId.FLYGON]);
 
-    const playerPokemon = game.scene.getPlayerPokemon()!;
-    game.move.select(Moves.CLOSE_COMBAT);
+    const playerPokemon = game.field.getPlayerPokemon();
+    game.move.select(MoveId.CLOSE_COMBAT);
     await game.phaseInterceptor.to(TurnInitPhase);
 
     expect(playerPokemon.getStatStage(Stat.SPDEF)).toBe(-1);
@@ -59,10 +60,10 @@ describe("Abilities - Competitive", () => {
 
   it("white herb should remove only the negative effects", async () => {
     game.override.startingHeldItems([{ name: "WHITE_HERB" }]);
-    await game.classicMode.startBattle([ Species.FLYGON ]);
+    await game.classicMode.startBattle([SpeciesId.FLYGON]);
 
-    const playerPokemon = game.scene.getPlayerPokemon()!;
-    game.move.select(Moves.SPLASH);
+    const playerPokemon = game.field.getPlayerPokemon();
+    game.move.select(MoveId.SPLASH);
     await game.phaseInterceptor.to(TurnInitPhase);
 
     expect(playerPokemon.getStatStage(Stat.ATK)).toBe(0);

@@ -1,9 +1,9 @@
-import type BattleScene from "#app/battle-scene";
-import { LoginPhase } from "#app/phases/login-phase";
-import { TitlePhase } from "#app/phases/title-phase";
-import { UnavailablePhase } from "#app/phases/unavailable-phase";
-import { Mode } from "#app/ui/ui";
-import GameManager from "#test/testUtils/gameManager";
+import type { BattleScene } from "#app/battle-scene";
+import { UiMode } from "#enums/ui-mode";
+import { LoginPhase } from "#phases/login-phase";
+import { TitlePhase } from "#phases/title-phase";
+import { UnavailablePhase } from "#phases/unavailable-phase";
+import { GameManager } from "#test/test-utils/game-manager";
 import Phaser from "phaser";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
@@ -30,27 +30,27 @@ describe("Phases", () => {
   describe("LoginPhase", () => {
     it("should start the login phase", async () => {
       const loginPhase = new LoginPhase();
-      scene.unshiftPhase(loginPhase);
-      await game.phaseInterceptor.run(LoginPhase);
-      expect(scene.ui.getMode()).to.equal(Mode.MESSAGE);
+      scene.phaseManager.unshiftPhase(loginPhase);
+      await game.phaseInterceptor.to(LoginPhase);
+      expect(scene.ui.getMode()).to.equal(UiMode.MESSAGE);
     });
   });
 
   describe("TitlePhase", () => {
     it("should start the title phase", async () => {
       const titlePhase = new TitlePhase();
-      scene.unshiftPhase(titlePhase);
-      await game.phaseInterceptor.run(TitlePhase);
-      expect(scene.ui.getMode()).to.equal(Mode.TITLE);
+      scene.phaseManager.unshiftPhase(titlePhase);
+      await game.phaseInterceptor.to(TitlePhase);
+      expect(scene.ui.getMode()).to.equal(UiMode.TITLE);
     });
   });
 
   describe("UnavailablePhase", () => {
     it("should start the unavailable phase", async () => {
       const unavailablePhase = new UnavailablePhase();
-      scene.unshiftPhase(unavailablePhase);
-      await game.phaseInterceptor.run(UnavailablePhase);
-      expect(scene.ui.getMode()).to.equal(Mode.UNAVAILABLE);
-    }, 20000);
+      scene.phaseManager.unshiftPhase(unavailablePhase);
+      await game.phaseInterceptor.to(UnavailablePhase);
+      expect(scene.ui.getMode()).to.equal(UiMode.UNAVAILABLE);
+    });
   });
 });

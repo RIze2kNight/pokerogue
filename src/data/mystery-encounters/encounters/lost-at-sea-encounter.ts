@@ -1,20 +1,20 @@
-import { getPokemonSpecies } from "#app/data/pokemon-species";
-import { Moves } from "#app/enums/moves";
-import { Species } from "#app/enums/species";
-import { MysteryEncounterType } from "#enums/mystery-encounter-type";
+import { CLASSIC_MODE_MYSTERY_ENCOUNTER_WAVES } from "#app/constants";
 import { globalScene } from "#app/global-scene";
-import type MysteryEncounter from "#app/data/mystery-encounters/mystery-encounter";
-import { MysteryEncounterBuilder } from "#app/data/mystery-encounters/mystery-encounter";
-import { MysteryEncounterOptionBuilder } from "#app/data/mystery-encounters/mystery-encounter-option";
-import { leaveEncounterWithoutBattle, setEncounterExp } from "../utils/encounter-phase-utils";
-import { applyDamageToPokemon } from "#app/data/mystery-encounters/utils/encounter-pokemon-utils";
-import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
+import { MoveId } from "#enums/move-id";
 import { MysteryEncounterOptionMode } from "#enums/mystery-encounter-option-mode";
-import { CLASSIC_MODE_MYSTERY_ENCOUNTER_WAVES } from "#app/game-mode";
-import { PokemonMove } from "#app/field/pokemon";
+import { MysteryEncounterTier } from "#enums/mystery-encounter-tier";
+import { MysteryEncounterType } from "#enums/mystery-encounter-type";
+import { SpeciesId } from "#enums/species-id";
+import { PokemonMove } from "#moves/pokemon-move";
+import { leaveEncounterWithoutBattle, setEncounterExp } from "#mystery-encounters/encounter-phase-utils";
+import { applyDamageToPokemon } from "#mystery-encounters/encounter-pokemon-utils";
+import type { MysteryEncounter } from "#mystery-encounters/mystery-encounter";
+import { MysteryEncounterBuilder } from "#mystery-encounters/mystery-encounter";
+import { MysteryEncounterOptionBuilder } from "#mystery-encounters/mystery-encounter-option";
+import { getPokemonSpecies } from "#utils/pokemon-utils";
 
-const OPTION_1_REQUIRED_MOVE = Moves.SURF;
-const OPTION_2_REQUIRED_MOVE = Moves.FLY;
+const OPTION_1_REQUIRED_MOVE = MoveId.SURF;
+const OPTION_2_REQUIRED_MOVE = MoveId.FLY;
 /**
  * Damage percentage taken when wandering aimlessly.
  * Can be a number between `0` - `100`.
@@ -29,7 +29,9 @@ const namespace = "mysteryEncounters/lostAtSea";
  * @see {@link https://github.com/pagefaultgames/pokerogue/issues/3793 | GitHub Issue #3793}
  * @see For biome requirements check {@linkcode mysteryEncountersByBiome}
  */
-export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.withEncounterType(MysteryEncounterType.LOST_AT_SEA)
+export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.withEncounterType(
+  MysteryEncounterType.LOST_AT_SEA,
+)
   .withEncounterTier(MysteryEncounterTier.COMMON)
   .withSceneWaveRangeRequirement(...CLASSIC_MODE_MYSTERY_ENCOUNTER_WAVES)
   .withIntroSpriteConfigs([
@@ -57,14 +59,13 @@ export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.with
   .withQuery(`${namespace}:query`)
   .withOption(
     // Option 1: Use a (non fainted) pokemon that can learn Surf to guide you back/
-    MysteryEncounterOptionBuilder
-      .newOptionWithMode(MysteryEncounterOptionMode.DISABLED_OR_DEFAULT)
+    MysteryEncounterOptionBuilder.newOptionWithMode(MysteryEncounterOptionMode.DISABLED_OR_DEFAULT)
       .withPokemonCanLearnMoveRequirement(OPTION_1_REQUIRED_MOVE)
       .withDialogue({
         buttonLabel: `${namespace}:option.1.label`,
-        disabledButtonLabel: `${namespace}:option.1.label_disabled`,
+        disabledButtonLabel: `${namespace}:option.1.labelDisabled`,
         buttonTooltip: `${namespace}:option.1.tooltip`,
-        disabledButtonTooltip: `${namespace}:option.1.tooltip_disabled`,
+        disabledButtonTooltip: `${namespace}:option.1.tooltipDisabled`,
         selected: [
           {
             text: `${namespace}:option.1.selected`,
@@ -72,18 +73,17 @@ export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.with
         ],
       })
       .withOptionPhase(async () => handlePokemonGuidingYouPhase())
-      .build()
+      .build(),
   )
   .withOption(
     //Option 2: Use a (non fainted) pokemon that can learn fly to guide you back.
-    MysteryEncounterOptionBuilder
-      .newOptionWithMode(MysteryEncounterOptionMode.DISABLED_OR_DEFAULT)
+    MysteryEncounterOptionBuilder.newOptionWithMode(MysteryEncounterOptionMode.DISABLED_OR_DEFAULT)
       .withPokemonCanLearnMoveRequirement(OPTION_2_REQUIRED_MOVE)
       .withDialogue({
         buttonLabel: `${namespace}:option.2.label`,
-        disabledButtonLabel: `${namespace}:option.2.label_disabled`,
+        disabledButtonLabel: `${namespace}:option.2.labelDisabled`,
         buttonTooltip: `${namespace}:option.2.tooltip`,
-        disabledButtonTooltip: `${namespace}:option.2.tooltip_disabled`,
+        disabledButtonTooltip: `${namespace}:option.2.tooltipDisabled`,
         selected: [
           {
             text: `${namespace}:option.2.selected`,
@@ -91,7 +91,7 @@ export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.with
         ],
       })
       .withOptionPhase(async () => handlePokemonGuidingYouPhase())
-      .build()
+      .build(),
   )
   .withSimpleOption(
     // Option 3: Wander aimlessly
@@ -105,7 +105,7 @@ export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.with
       ],
     },
     async () => {
-      const allowedPokemon = globalScene.getPlayerParty().filter((p) => p.isAllowedInBattle());
+      const allowedPokemon = globalScene.getPlayerParty().filter(p => p.isAllowedInBattle());
 
       for (const pkm of allowedPokemon) {
         const percentage = DAMAGE_PERCENTAGE / 100;
@@ -116,7 +116,7 @@ export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.with
       leaveEncounterWithoutBattle();
 
       return true;
-    }
+    },
   )
   .withOutroDialogue([
     {
@@ -129,7 +129,7 @@ export const LostAtSeaEncounter: MysteryEncounter = MysteryEncounterBuilder.with
  * Generic handler for using a guiding pokemon to guide you back.
  */
 function handlePokemonGuidingYouPhase() {
-  const laprasSpecies = getPokemonSpecies(Species.LAPRAS);
+  const laprasSpecies = getPokemonSpecies(SpeciesId.LAPRAS);
   const { mysteryEncounter } = globalScene.currentBattle;
 
   if (mysteryEncounter?.selectedOption?.primaryPokemon?.id) {

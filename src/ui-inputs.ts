@@ -1,19 +1,19 @@
-import type Phaser from "phaser";
-import { Mode } from "./ui/ui";
-import type { InputsController } from "./inputs-controller";
-import type MessageUiHandler from "./ui/message-ui-handler";
-import StarterSelectUiHandler from "./ui/starter-select-ui-handler";
-import { Setting, SettingKeys, settingIndex } from "./system/settings/settings";
-import SettingsUiHandler from "./ui/settings/settings-ui-handler";
-import { Button } from "#enums/buttons";
-import SettingsGamepadUiHandler from "./ui/settings/settings-gamepad-ui-handler";
-import SettingsKeyboardUiHandler from "#app/ui/settings/settings-keyboard-ui-handler";
 import { globalScene } from "#app/global-scene";
-import SettingsDisplayUiHandler from "./ui/settings/settings-display-ui-handler";
-import SettingsAudioUiHandler from "./ui/settings/settings-audio-ui-handler";
-import RunInfoUiHandler from "./ui/run-info-ui-handler";
-import PokedexUiHandler from "./ui/pokedex-ui-handler";
-import PokedexPageUiHandler from "./ui/pokedex-page-ui-handler";
+import type { InputsController } from "#app/inputs-controller";
+import { Button } from "#enums/buttons";
+import { UiMode } from "#enums/ui-mode";
+import { Setting, SettingKeys, settingIndex } from "#system/settings";
+import type { MessageUiHandler } from "#ui/message-ui-handler";
+import { PokedexPageUiHandler } from "#ui/pokedex-page-ui-handler";
+import { PokedexUiHandler } from "#ui/pokedex-ui-handler";
+import { RunInfoUiHandler } from "#ui/run-info-ui-handler";
+import { SettingsAudioUiHandler } from "#ui/settings-audio-ui-handler";
+import { SettingsDisplayUiHandler } from "#ui/settings-display-ui-handler";
+import { SettingsGamepadUiHandler } from "#ui/settings-gamepad-ui-handler";
+import { SettingsKeyboardUiHandler } from "#ui/settings-keyboard-ui-handler";
+import { SettingsUiHandler } from "#ui/settings-ui-handler";
+import { StarterSelectUiHandler } from "#ui/starter-select-ui-handler";
+import Phaser from "phaser";
 
 type ActionKeys = Record<Button, () => void>;
 
@@ -45,23 +45,31 @@ export class UiInputs {
   }
 
   listenInputs(): void {
-    this.events.on("input_down", (event) => {
-      this.detectInputMethod(event);
+    this.events.on(
+      "input_down",
+      event => {
+        this.detectInputMethod(event);
 
-      const actions = this.getActionsKeyDown();
-      if (!actions.hasOwnProperty(event.button)) {
-        return;
-      }
-      actions[event.button]();
-    }, this);
+        const actions = this.getActionsKeyDown();
+        if (!actions.hasOwnProperty(event.button)) {
+          return;
+        }
+        actions[event.button]();
+      },
+      this,
+    );
 
-    this.events.on("input_up", (event) => {
-      const actions = this.getActionsKeyUp();
-      if (!actions.hasOwnProperty(event.button)) {
-        return;
-      }
-      actions[event.button]();
-    }, this);
+    this.events.on(
+      "input_up",
+      event => {
+        const actions = this.getActionsKeyUp();
+        if (!actions.hasOwnProperty(event.button)) {
+          return;
+        }
+        actions[event.button]();
+      },
+      this,
+    );
   }
 
   doVibration(inputSuccess: boolean, vibrationLength: number): void {
@@ -72,46 +80,46 @@ export class UiInputs {
 
   getActionsKeyDown(): ActionKeys {
     const actions: ActionKeys = {
-      [Button.UP]:              () => this.buttonDirection(Button.UP),
-      [Button.DOWN]:            () => this.buttonDirection(Button.DOWN),
-      [Button.LEFT]:            () => this.buttonDirection(Button.LEFT),
-      [Button.RIGHT]:           () => this.buttonDirection(Button.RIGHT),
-      [Button.SUBMIT]:          () => this.buttonTouch(),
-      [Button.ACTION]:          () => this.buttonAb(Button.ACTION),
-      [Button.CANCEL]:          () => this.buttonAb(Button.CANCEL),
-      [Button.MENU]:            () => this.buttonMenu(),
-      [Button.STATS]:           () => this.buttonGoToFilter(Button.STATS),
-      [Button.CYCLE_SHINY]:     () => this.buttonCycleOption(Button.CYCLE_SHINY),
-      [Button.CYCLE_FORM]:      () => this.buttonCycleOption(Button.CYCLE_FORM),
-      [Button.CYCLE_GENDER]:    () => this.buttonCycleOption(Button.CYCLE_GENDER),
-      [Button.CYCLE_ABILITY]:   () => this.buttonCycleOption(Button.CYCLE_ABILITY),
-      [Button.CYCLE_NATURE]:    () => this.buttonCycleOption(Button.CYCLE_NATURE),
-      [Button.CYCLE_TERA]:      () => this.buttonCycleOption(Button.CYCLE_TERA),
-      [Button.SPEED_UP]:        () => this.buttonSpeedChange(),
-      [Button.SLOW_DOWN]:       () => this.buttonSpeedChange(false),
+      [Button.UP]: () => this.buttonDirection(Button.UP),
+      [Button.DOWN]: () => this.buttonDirection(Button.DOWN),
+      [Button.LEFT]: () => this.buttonDirection(Button.LEFT),
+      [Button.RIGHT]: () => this.buttonDirection(Button.RIGHT),
+      [Button.SUBMIT]: () => this.buttonTouch(),
+      [Button.ACTION]: () => this.buttonAb(Button.ACTION),
+      [Button.CANCEL]: () => this.buttonAb(Button.CANCEL),
+      [Button.MENU]: () => this.buttonMenu(),
+      [Button.STATS]: () => this.buttonGoToFilter(Button.STATS),
+      [Button.CYCLE_SHINY]: () => this.buttonCycleOption(Button.CYCLE_SHINY),
+      [Button.CYCLE_FORM]: () => this.buttonCycleOption(Button.CYCLE_FORM),
+      [Button.CYCLE_GENDER]: () => this.buttonCycleOption(Button.CYCLE_GENDER),
+      [Button.CYCLE_ABILITY]: () => this.buttonCycleOption(Button.CYCLE_ABILITY),
+      [Button.CYCLE_NATURE]: () => this.buttonCycleOption(Button.CYCLE_NATURE),
+      [Button.CYCLE_TERA]: () => this.buttonCycleOption(Button.CYCLE_TERA),
+      [Button.SPEED_UP]: () => this.buttonSpeedChange(),
+      [Button.SLOW_DOWN]: () => this.buttonSpeedChange(false),
     };
     return actions;
   }
 
   getActionsKeyUp(): ActionKeys {
     const actions: ActionKeys = {
-      [Button.UP]:              () => undefined,
-      [Button.DOWN]:            () => undefined,
-      [Button.LEFT]:            () => undefined,
-      [Button.RIGHT]:           () => undefined,
-      [Button.SUBMIT]:          () => undefined,
-      [Button.ACTION]:          () => undefined,
-      [Button.CANCEL]:          () => undefined,
-      [Button.MENU]:            () => undefined,
-      [Button.STATS]:           () => this.buttonStats(false),
-      [Button.CYCLE_SHINY]:     () => undefined,
-      [Button.CYCLE_FORM]:      () => undefined,
-      [Button.CYCLE_GENDER]:    () => undefined,
-      [Button.CYCLE_ABILITY]:   () => undefined,
-      [Button.CYCLE_NATURE]:    () => undefined,
-      [Button.CYCLE_TERA]:      () => this.buttonInfo(false),
-      [Button.SPEED_UP]:        () => undefined,
-      [Button.SLOW_DOWN]:       () => undefined,
+      [Button.UP]: () => undefined,
+      [Button.DOWN]: () => undefined,
+      [Button.LEFT]: () => undefined,
+      [Button.RIGHT]: () => undefined,
+      [Button.SUBMIT]: () => undefined,
+      [Button.ACTION]: () => undefined,
+      [Button.CANCEL]: () => undefined,
+      [Button.MENU]: () => undefined,
+      [Button.STATS]: () => this.buttonStats(false),
+      [Button.CYCLE_SHINY]: () => undefined,
+      [Button.CYCLE_FORM]: () => undefined,
+      [Button.CYCLE_GENDER]: () => undefined,
+      [Button.CYCLE_ABILITY]: () => undefined,
+      [Button.CYCLE_NATURE]: () => undefined,
+      [Button.CYCLE_TERA]: () => this.buttonInfo(false),
+      [Button.SPEED_UP]: () => undefined,
+      [Button.SLOW_DOWN]: () => undefined,
     };
     return actions;
   }
@@ -130,7 +138,7 @@ export class UiInputs {
     globalScene.ui.processInput(Button.SUBMIT) || globalScene.ui.processInput(Button.ACTION);
   }
 
-  buttonStats(pressed: boolean = true): void {
+  buttonStats(pressed = true): void {
     // allow access to Button.STATS as a toggle for other elements
     for (const t of globalScene.getInfoToggles(true)) {
       t.toggleInfo(pressed);
@@ -142,7 +150,7 @@ export class UiInputs {
   }
 
   buttonGoToFilter(button: Button): void {
-    const whitelist = [ StarterSelectUiHandler, PokedexUiHandler, PokedexPageUiHandler ];
+    const whitelist = [StarterSelectUiHandler, PokedexUiHandler, PokedexPageUiHandler];
     const uiHandler = globalScene.ui?.getHandler();
     if (whitelist.some(handler => uiHandler instanceof handler)) {
       globalScene.ui.processInput(button);
@@ -151,9 +159,9 @@ export class UiInputs {
     }
   }
 
-  buttonInfo(pressed: boolean = true): void {
-    if (globalScene.showMovesetFlyout ) {
-      for (const p of globalScene.getField().filter(p => p?.isActive(true))) {
+  buttonInfo(pressed = true): void {
+    if (globalScene.showMovesetFlyout) {
+      for (const p of globalScene.getEnemyField().filter(p => p?.isActive(true))) {
         p.toggleFlyout(pressed);
       }
     }
@@ -168,22 +176,24 @@ export class UiInputs {
       return;
     }
     switch (globalScene.ui?.getMode()) {
-      case Mode.MESSAGE:
+      // biome-ignore lint/suspicious/noFallthroughSwitchClause: falls through to show menu overlay
+      case UiMode.MESSAGE: {
         const messageHandler = globalScene.ui.getHandler<MessageUiHandler>();
         if (!messageHandler.pendingPrompt || messageHandler.isTextAnimationInProgress()) {
           return;
         }
-      case Mode.TITLE:
-      case Mode.COMMAND:
-      case Mode.MODIFIER_SELECT:
-      case Mode.MYSTERY_ENCOUNTER:
-        globalScene.ui.setOverlayMode(Mode.MENU);
+      }
+      case UiMode.TITLE:
+      case UiMode.COMMAND:
+      case UiMode.MODIFIER_SELECT:
+      case UiMode.MYSTERY_ENCOUNTER:
+        globalScene.ui.setOverlayMode(UiMode.MENU);
         break;
-      case Mode.STARTER_SELECT:
-      case Mode.POKEDEX_PAGE:
+      case UiMode.STARTER_SELECT:
+      case UiMode.POKEDEX_PAGE:
         this.buttonTouch();
         break;
-      case Mode.MENU:
+      case UiMode.MENU:
         globalScene.ui.revertMode();
         globalScene.playSound("ui/select");
         break;
@@ -193,7 +203,17 @@ export class UiInputs {
   }
 
   buttonCycleOption(button: Button): void {
-    const whitelist = [ StarterSelectUiHandler, PokedexUiHandler, PokedexPageUiHandler, SettingsUiHandler, RunInfoUiHandler, SettingsDisplayUiHandler, SettingsAudioUiHandler, SettingsGamepadUiHandler, SettingsKeyboardUiHandler ];
+    const whitelist = [
+      StarterSelectUiHandler,
+      PokedexUiHandler,
+      PokedexPageUiHandler,
+      SettingsUiHandler,
+      RunInfoUiHandler,
+      SettingsDisplayUiHandler,
+      SettingsAudioUiHandler,
+      SettingsGamepadUiHandler,
+      SettingsKeyboardUiHandler,
+    ];
     const uiHandler = globalScene.ui?.getHandler();
     if (whitelist.some(handler => uiHandler instanceof handler)) {
       globalScene.ui.processInput(button);
@@ -204,17 +224,26 @@ export class UiInputs {
 
   buttonSpeedChange(up = true): void {
     const settingGameSpeed = settingIndex(SettingKeys.Game_Speed);
+    const settingOptions = Setting[settingGameSpeed].options;
+    let currentSetting = settingOptions.findIndex(item => item.value === globalScene.gameSpeed.toString());
+    // if current setting is -1, then the current game speed is not a valid option, so default to index 5 (3x)
+    if (currentSetting === -1) {
+      currentSetting = 5;
+    }
+    let direction: number;
     if (up && globalScene.gameSpeed < 5) {
-      globalScene.gameData.saveSetting(SettingKeys.Game_Speed, Setting[settingGameSpeed].options.findIndex((item) => item.label === `${globalScene.gameSpeed}x`) + 1);
-      if (globalScene.ui?.getMode() === Mode.SETTINGS) {
-        (globalScene.ui.getHandler() as SettingsUiHandler).show([]);
-      }
+      direction = 1;
     } else if (!up && globalScene.gameSpeed > 1) {
-      globalScene.gameData.saveSetting(SettingKeys.Game_Speed, Math.max(Setting[settingGameSpeed].options.findIndex((item) => item.label === `${globalScene.gameSpeed}x`) - 1, 0));
-      if (globalScene.ui?.getMode() === Mode.SETTINGS) {
-        (globalScene.ui.getHandler() as SettingsUiHandler).show([]);
-      }
+      direction = -1;
+    } else {
+      return;
+    }
+    globalScene.gameData.saveSetting(
+      SettingKeys.Game_Speed,
+      Phaser.Math.Clamp(currentSetting + direction, 0, settingOptions.length - 1),
+    );
+    if (globalScene.ui?.getMode() === UiMode.SETTINGS) {
+      (globalScene.ui.getHandler() as SettingsUiHandler).show([]);
     }
   }
-
 }

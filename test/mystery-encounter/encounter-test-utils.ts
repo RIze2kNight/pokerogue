@@ -1,18 +1,23 @@
-import * as EncounterPhaseUtils from "#app/data/mystery-encounters/utils/encounter-phase-utils";
-import { Status } from "#app/data/status-effect";
-import { CommandPhase } from "#app/phases/command-phase";
-import { MessagePhase } from "#app/phases/message-phase";
-import { MysteryEncounterBattlePhase, MysteryEncounterOptionSelectedPhase, MysteryEncounterPhase, MysteryEncounterRewardsPhase } from "#app/phases/mystery-encounter-phases";
-import { VictoryPhase } from "#app/phases/victory-phase";
-import type MessageUiHandler from "#app/ui/message-ui-handler";
-import type MysteryEncounterUiHandler from "#app/ui/mystery-encounter-ui-handler";
-import type PartyUiHandler from "#app/ui/party-ui-handler";
-import type OptionSelectUiHandler from "#app/ui/settings/option-select-ui-handler";
-import { Mode } from "#app/ui/ui";
-import { isNullOrUndefined } from "#app/utils";
+import { Status } from "#data/status-effect";
 import { Button } from "#enums/buttons";
 import { StatusEffect } from "#enums/status-effect";
-import type GameManager from "#test/testUtils/gameManager";
+import { UiMode } from "#enums/ui-mode";
+// biome-ignore lint/performance/noNamespaceImport: Necessary for mocks
+import * as EncounterPhaseUtils from "#mystery-encounters/encounter-phase-utils";
+import { CommandPhase } from "#phases/command-phase";
+import { MessagePhase } from "#phases/message-phase";
+import {
+  MysteryEncounterBattlePhase,
+  MysteryEncounterOptionSelectedPhase,
+  MysteryEncounterRewardsPhase,
+} from "#phases/mystery-encounter-phases";
+import { VictoryPhase } from "#phases/victory-phase";
+import type { GameManager } from "#test/test-utils/game-manager";
+import type { MessageUiHandler } from "#ui/message-ui-handler";
+import type { MysteryEncounterUiHandler } from "#ui/mystery-encounter-ui-handler";
+import type { OptionSelectUiHandler } from "#ui/option-select-ui-handler";
+import type { PartyUiHandler } from "#ui/party-ui-handler";
+import { isNullOrUndefined } from "#utils/common";
 import { expect, vi } from "vitest";
 
 /**
@@ -22,86 +27,111 @@ import { expect, vi } from "vitest";
  * @param secondaryOptionSelect
  * @param isBattle If selecting option should lead to battle, set to `true`
  */
-export async function runMysteryEncounterToEnd(game: GameManager, optionNo: number, secondaryOptionSelect?: { pokemonNo: number, optionNo?: number }, isBattle: boolean = false) {
+export async function runMysteryEncounterToEnd(
+  game: GameManager,
+  optionNo: number,
+  secondaryOptionSelect?: { pokemonNo: number; optionNo?: number },
+  isBattle = false,
+) {
   vi.spyOn(EncounterPhaseUtils, "selectPokemonForOption");
   await runSelectMysteryEncounterOption(game, optionNo, secondaryOptionSelect);
 
   // run the selected options phase
-  game.onNextPrompt("MysteryEncounterOptionSelectedPhase", Mode.MESSAGE, () => {
-    const uiHandler = game.scene.ui.getHandler<MysteryEncounterUiHandler>();
-    uiHandler.processInput(Button.ACTION);
-  }, () => game.isCurrentPhase(MysteryEncounterBattlePhase) || game.isCurrentPhase(MysteryEncounterRewardsPhase));
+  game.onNextPrompt(
+    "MysteryEncounterOptionSelectedPhase",
+    UiMode.MESSAGE,
+    () => {
+      const uiHandler = game.scene.ui.getHandler<MysteryEncounterUiHandler>();
+      uiHandler.processInput(Button.ACTION);
+    },
+    () => game.isCurrentPhase(MysteryEncounterBattlePhase) || game.isCurrentPhase(MysteryEncounterRewardsPhase),
+  );
 
   if (isBattle) {
-    game.onNextPrompt("DamageAnimPhase", Mode.MESSAGE, () => {
-      game.setMode(Mode.MESSAGE);
-      game.endPhase();
-    }, () => game.isCurrentPhase(CommandPhase));
+    game.onNextPrompt(
+      "CheckSwitchPhase",
+      UiMode.CONFIRM,
+      () => {
+        game.setMode(UiMode.MESSAGE);
+        game.endPhase();
+      },
+      () => game.isCurrentPhase(CommandPhase),
+    );
 
-    game.onNextPrompt("CheckSwitchPhase", Mode.CONFIRM, () => {
-      game.setMode(Mode.MESSAGE);
-      game.endPhase();
-    }, () => game.isCurrentPhase(CommandPhase));
-
-    game.onNextPrompt("CheckSwitchPhase", Mode.MESSAGE, () => {
-      game.setMode(Mode.MESSAGE);
-      game.endPhase();
-    }, () => game.isCurrentPhase(CommandPhase));
+    game.onNextPrompt(
+      "CheckSwitchPhase",
+      UiMode.MESSAGE,
+      () => {
+        game.setMode(UiMode.MESSAGE);
+        game.endPhase();
+      },
+      () => game.isCurrentPhase(CommandPhase),
+    );
 
     // If a battle is started, fast forward to end of the battle
-    game.onNextPrompt("CommandPhase", Mode.COMMAND, () => {
-      game.scene.clearPhaseQueue();
-      game.scene.clearPhaseQueueSplice();
-      game.scene.unshiftPhase(new VictoryPhase(0));
+    game.onNextPrompt("CommandPhase", UiMode.COMMAND, () => {
+      game.scene.phaseManager.clearPhaseQueue();
+      game.scene.phaseManager.clearPhaseQueueSplice();
+      game.scene.phaseManager.unshiftPhase(new VictoryPhase(0));
       game.endPhase();
     });
 
     // Handle end of battle trainer messages
-    game.onNextPrompt("TrainerVictoryPhase", Mode.MESSAGE, () => {
+    game.onNextPrompt("TrainerVictoryPhase", UiMode.MESSAGE, () => {
       const uiHandler = game.scene.ui.getHandler<MessageUiHandler>();
       uiHandler.processInput(Button.ACTION);
     });
 
     // Handle egg hatch dialogue
-    game.onNextPrompt("EggLapsePhase", Mode.MESSAGE, () => {
+    game.onNextPrompt("EggLapsePhase", UiMode.MESSAGE, () => {
       const uiHandler = game.scene.ui.getHandler<MessageUiHandler>();
       uiHandler.processInput(Button.ACTION);
     });
 
-    await game.phaseInterceptor.to(CommandPhase);
+    await game.toNextTurn();
   } else {
-    await game.phaseInterceptor.to(MysteryEncounterRewardsPhase);
+    await game.phaseInterceptor.to("MysteryEncounterRewardsPhase");
   }
 }
 
-export async function runSelectMysteryEncounterOption(game: GameManager, optionNo: number, secondaryOptionSelect?: { pokemonNo: number, optionNo?: number }) {
+export async function runSelectMysteryEncounterOption(
+  game: GameManager,
+  optionNo: number,
+  secondaryOptionSelect?: { pokemonNo: number; optionNo?: number },
+) {
   // Handle any eventual queued messages (e.g. weather phase, etc.)
-  game.onNextPrompt("MessagePhase", Mode.MESSAGE, () => {
-    const uiHandler = game.scene.ui.getHandler<MessageUiHandler>();
-    uiHandler.processInput(Button.ACTION);
-  }, () => game.isCurrentPhase(MysteryEncounterOptionSelectedPhase));
+  game.onNextPrompt(
+    "MessagePhase",
+    UiMode.MESSAGE,
+    () => {
+      const uiHandler = game.scene.ui.getHandler<MessageUiHandler>();
+      uiHandler.processInput(Button.ACTION);
+    },
+    () => game.isCurrentPhase(MysteryEncounterOptionSelectedPhase),
+  );
 
   if (game.isCurrentPhase(MessagePhase)) {
-    await game.phaseInterceptor.run(MessagePhase);
+    await game.phaseInterceptor.to("MessagePhase");
   }
 
   // dispose of intro messages
-  game.onNextPrompt("MysteryEncounterPhase", Mode.MESSAGE, () => {
-    const uiHandler = game.scene.ui.getHandler<MysteryEncounterUiHandler>();
-    uiHandler.processInput(Button.ACTION);
-  }, () => game.isCurrentPhase(MysteryEncounterOptionSelectedPhase));
+  game.onNextPrompt(
+    "MysteryEncounterPhase",
+    UiMode.MESSAGE,
+    () => {
+      const uiHandler = game.scene.ui.getHandler<MysteryEncounterUiHandler>();
+      uiHandler.processInput(Button.ACTION);
+    },
+    () => game.isCurrentPhase(MysteryEncounterOptionSelectedPhase),
+  );
 
-  await game.phaseInterceptor.to(MysteryEncounterPhase, true);
+  await game.phaseInterceptor.to("MysteryEncounterPhase", true);
 
   // select the desired option
   const uiHandler = game.scene.ui.getHandler<MysteryEncounterUiHandler>();
   uiHandler.unblockInput(); // input are blocked by 1s to prevent accidental input. Tests need to handle that
 
   switch (optionNo) {
-    default:
-    case 1:
-    // no movement needed. Default cursor position
-      break;
     case 2:
       uiHandler.processInput(Button.RIGHT);
       break;
@@ -111,6 +141,9 @@ export async function runSelectMysteryEncounterOption(game: GameManager, optionN
     case 4:
       uiHandler.processInput(Button.RIGHT);
       uiHandler.processInput(Button.DOWN);
+      break;
+    default:
+      // no movement needed. Default cursor position
       break;
   }
 
@@ -123,7 +156,7 @@ export async function runSelectMysteryEncounterOption(game: GameManager, optionN
 
 async function handleSecondaryOptionSelect(game: GameManager, pokemonNo: number, optionNo?: number) {
   // Handle secondary option selections
-  const partyUiHandler = game.scene.ui.handlers[Mode.PARTY] as PartyUiHandler;
+  const partyUiHandler = game.scene.ui.handlers[UiMode.PARTY] as PartyUiHandler;
   vi.spyOn(partyUiHandler, "show");
 
   const encounterUiHandler = game.scene.ui.getHandler<MysteryEncounterUiHandler>();
@@ -143,7 +176,7 @@ async function handleSecondaryOptionSelect(game: GameManager, pokemonNo: number,
   // If there is a second choice to make after selecting a Pokemon
   if (!isNullOrUndefined(optionNo)) {
     // Wait for Summary menu to close and second options to spawn
-    const secondOptionUiHandler = game.scene.ui.handlers[Mode.OPTION_SELECT] as OptionSelectUiHandler;
+    const secondOptionUiHandler = game.scene.ui.handlers[UiMode.OPTION_SELECT] as OptionSelectUiHandler;
     vi.spyOn(secondOptionUiHandler, "show");
     await vi.waitFor(() => expect(secondOptionUiHandler.show).toHaveBeenCalled());
 
@@ -162,16 +195,16 @@ async function handleSecondaryOptionSelect(game: GameManager, pokemonNo: number,
  * @param game
  * @param runRewardsPhase
  */
-export async function skipBattleRunMysteryEncounterRewardsPhase(game: GameManager, runRewardsPhase: boolean = true) {
-  game.scene.clearPhaseQueue();
-  game.scene.clearPhaseQueueSplice();
+export async function skipBattleRunMysteryEncounterRewardsPhase(game: GameManager, runRewardsPhase = true) {
+  game.scene.phaseManager.clearPhaseQueue();
+  game.scene.phaseManager.clearPhaseQueueSplice();
   game.scene.getEnemyParty().forEach(p => {
     p.hp = 0;
     p.status = new Status(StatusEffect.FAINT);
     game.scene.field.remove(p);
   });
-  game.scene.pushPhase(new VictoryPhase(0));
-  game.phaseInterceptor.superEndPhase();
-  game.setMode(Mode.MESSAGE);
-  await game.phaseInterceptor.to(MysteryEncounterRewardsPhase, runRewardsPhase);
+  game.scene.phaseManager.pushPhase(new VictoryPhase(0));
+  game.endPhase();
+  game.setMode(UiMode.MESSAGE);
+  await game.phaseInterceptor.to("MysteryEncounterRewardsPhase", runRewardsPhase);
 }

@@ -1,9 +1,9 @@
-import type { TitleStatsResponse } from "#app/@types/PokerogueApi";
-import { ApiBase } from "#app/plugins/api/api-base";
-import { PokerogueAccountApi } from "#app/plugins/api/pokerogue-account-api";
-import { PokerogueAdminApi } from "#app/plugins/api/pokerogue-admin-api";
-import { PokerogueDailyApi } from "#app/plugins/api/pokerogue-daily-api";
-import { PokerogueSavedataApi } from "#app/plugins/api/pokerogue-savedata-api";
+import { ApiBase } from "#api/api-base";
+import { PokerogueAccountApi } from "#api/pokerogue-account-api";
+import { PokerogueAdminApi } from "#api/pokerogue-admin-api";
+import { PokerogueDailyApi } from "#api/pokerogue-daily-api";
+import { PokerogueSavedataApi } from "#api/pokerogue-savedata-api";
+import type { TitleStatsResponse } from "#types/api/pokerogue-api-types";
 
 /**
  * A wrapper for PokéRogue API requests.
@@ -48,9 +48,8 @@ export class PokerogueApi extends ApiBase {
       const response = await this.doPost("/auth/discord/logout");
       if (response.ok) {
         return true;
-      } else {
-        console.warn(`Discord unlink failed (${response.status}: ${response.statusText})`);
       }
+      console.warn(`Discord unlink failed (${response.status}: ${response.statusText})`);
     } catch (err) {
       console.warn("Could not unlink Discord!", err);
     }
@@ -67,9 +66,8 @@ export class PokerogueApi extends ApiBase {
       const response = await this.doPost("/auth/google/logout");
       if (response.ok) {
         return true;
-      } else {
-        console.warn(`Google unlink failed (${response.status}: ${response.statusText})`);
       }
+      console.warn(`Google unlink failed (${response.status}: ${response.statusText})`);
     } catch (err) {
       console.warn("Could not unlink Google!", err);
     }

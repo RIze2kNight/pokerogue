@@ -1,3 +1,7 @@
+import { PokerogueSessionSavedataApi } from "#api/pokerogue-session-savedata-api";
+import type { SessionSaveData } from "#system/game-data";
+import { initServerForApiTests } from "#test/test-utils/test-file-initialization";
+import { getApiBaseUrl } from "#test/test-utils/test-utils";
 import type {
   ClearSessionSavedataRequest,
   ClearSessionSavedataResponse,
@@ -5,16 +9,18 @@ import type {
   GetSessionSavedataRequest,
   NewClearSessionSavedataRequest,
   UpdateSessionSavedataRequest,
-} from "#app/@types/PokerogueSessionSavedataApi";
-import { PokerogueSessionSavedataApi } from "#app/plugins/api/pokerogue-session-savedata-api";
-import type { SessionSaveData } from "#app/system/game-data";
-import { getApiBaseUrl } from "#test/testUtils/testUtils";
-import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+} from "#types/api/pokerogue-session-save-data-api";
+import { HttpResponse, http } from "msw";
+import type { SetupServerApi } from "msw/node";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiBase = getApiBaseUrl();
 const sessionSavedataApi = new PokerogueSessionSavedataApi(apiBase);
-const { server } = global;
+
+let server: SetupServerApi;
+beforeAll(async () => {
+  server = await initServerForApiTests();
+});
 
 afterEach(() => {
   server.resetHandlers();
@@ -29,7 +35,7 @@ describe("Pokerogue Session Savedata API", () => {
     const params: NewClearSessionSavedataRequest = {
       clientSessionId: "test-session-id",
       isVictory: true,
-      slot: 3
+      slot: 3,
     };
 
     it("should return true on SUCCESS", async () => {
@@ -51,9 +57,7 @@ describe("Pokerogue Session Savedata API", () => {
     it("should return false and report a warning on ERROR", async () => {
       server.use(http.get(`${apiBase}/savedata/session/newclear`, () => HttpResponse.error()));
 
-      const success = await sessionSavedataApi.newclear(params);
-
-      expect(success).toBe(false);
+      await expect(sessionSavedataApi.newclear(params)).rejects.toThrow("Could not newclear session!");
       expect(console.warn).toHaveBeenCalledWith("Could not newclear session!", expect.any(Error));
     });
   });
@@ -132,7 +136,7 @@ describe("Pokerogue Session Savedata API", () => {
 
     it("should return an error string on FAILURE", async () => {
       server.use(
-        http.get(`${apiBase}/savedata/session/delete`, () => new HttpResponse("Failed to delete!", { status: 400 }))
+        http.get(`${apiBase}/savedata/session/delete`, () => new HttpResponse("Failed to delete!", { status: 400 })),
       );
 
       const error = await sessionSavedataApi.delete(params);
@@ -162,8 +166,8 @@ describe("Pokerogue Session Savedata API", () => {
         http.post(`${apiBase}/savedata/session/clear`, () =>
           HttpResponse.json<ClearSessionSavedataResponse>({
             success: true,
-          })
-        )
+          }),
+        ),
       );
 
       const { success, error } = await sessionSavedataApi.clear(params, {} as SessionSaveData);
@@ -178,8 +182,8 @@ describe("Pokerogue Session Savedata API", () => {
           HttpResponse.json<ClearSessionSavedataResponse>({
             success: false,
             error: "Failed to clear!",
-          })
-        )
+          }),
+        ),
       );
 
       const { success, error } = await sessionSavedataApi.clear(params, {} as SessionSaveData);

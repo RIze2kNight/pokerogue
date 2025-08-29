@@ -1,45 +1,32 @@
-import type { InputFieldConfig } from "./form-modal-ui-handler";
-import { FormModalUiHandler } from "./form-modal-ui-handler";
-import type { ModalConfig } from "./modal-ui-handler";
-import { Mode } from "./ui";
-import { TextStyle, addTextObject } from "./text";
-import i18next from "i18next";
-import { pokerogueApi } from "#app/plugins/api/pokerogue-api";
+import { pokerogueApi } from "#api/pokerogue-api";
 import { globalScene } from "#app/global-scene";
+import { TextStyle } from "#enums/text-style";
+import { UiMode } from "#enums/ui-mode";
+import type { InputFieldConfig } from "#ui/form-modal-ui-handler";
+import { FormModalUiHandler } from "#ui/form-modal-ui-handler";
+import type { ModalConfig } from "#ui/modal-ui-handler";
+import { addTextObject } from "#ui/text";
+import i18next from "i18next";
 
-
-interface LanguageSetting {
-  inputFieldFontSize?: string,
-  warningMessageFontSize?: string,
-  errorMessageFontSize?: string,
-}
-
-const languageSettings: { [key: string]: LanguageSetting } = {
-  "es-ES": {
-    inputFieldFontSize: "50px",
-    errorMessageFontSize: "40px",
-  }
-};
-
-export default class RegistrationFormUiHandler extends FormModalUiHandler {
-  getModalTitle(config?: ModalConfig): string {
+export class RegistrationFormUiHandler extends FormModalUiHandler {
+  getModalTitle(_config?: ModalConfig): string {
     return i18next.t("menu:register");
   }
 
-  getWidth(config?: ModalConfig): number {
+  getWidth(_config?: ModalConfig): number {
     return 160;
   }
 
-  getMargin(config?: ModalConfig): [number, number, number, number] {
-    return [ 0, 0, 48, 0 ];
+  getMargin(_config?: ModalConfig): [number, number, number, number] {
+    return [0, 0, 48, 0];
   }
 
   getButtonTopMargin(): number {
-    return 8;
+    return 12;
   }
 
-  getButtonLabels(config?: ModalConfig): string[] {
-    return [ i18next.t("menu:register"), i18next.t("menu:backToLogin") ];
+  getButtonLabels(_config?: ModalConfig): string[] {
+    return [i18next.t("menu:register"), i18next.t("menu:backToLogin")];
   }
 
   getReadableErrorMessage(error: string): string {
@@ -62,25 +49,24 @@ export default class RegistrationFormUiHandler extends FormModalUiHandler {
   override getInputFieldConfigs(): InputFieldConfig[] {
     const inputFieldConfigs: InputFieldConfig[] = [];
     inputFieldConfigs.push({ label: i18next.t("menu:username") });
-    inputFieldConfigs.push({ label: i18next.t("menu:password"), isPassword: true });
-    inputFieldConfigs.push({ label: i18next.t("menu:confirmPassword"), isPassword: true });
+    inputFieldConfigs.push({
+      label: i18next.t("menu:password"),
+      isPassword: true,
+    });
+    inputFieldConfigs.push({
+      label: i18next.t("menu:confirmPassword"),
+      isPassword: true,
+    });
     return inputFieldConfigs;
   }
 
   setup(): void {
     super.setup();
 
-    this.modalContainer.list.forEach((child: Phaser.GameObjects.GameObject) => {
-      if (child instanceof Phaser.GameObjects.Text && child !== this.titleText) {
-        const inputFieldFontSize = languageSettings[i18next.resolvedLanguage!]?.inputFieldFontSize;
-        if (inputFieldFontSize) {
-          child.setFontSize(inputFieldFontSize);
-        }
-      }
+    const label = addTextObject(10, 87, i18next.t("menu:registrationAgeWarning"), TextStyle.TOOLTIP_CONTENT, {
+      fontSize: "42px",
+      wordWrap: { width: 850 },
     });
-
-    const warningMessageFontSize = languageSettings[i18next.resolvedLanguage!]?.warningMessageFontSize ?? "42px";
-    const label = addTextObject(10, 87, i18next.t("menu:registrationAgeWarning"), TextStyle.TOOLTIP_CONTENT, { fontSize: warningMessageFontSize });
 
     this.modalContainer.add(label);
   }
@@ -90,44 +76,50 @@ export default class RegistrationFormUiHandler extends FormModalUiHandler {
       const config = args[0] as ModalConfig;
 
       const originalRegistrationAction = this.submitAction;
-      this.submitAction = (_) => {
-        // Prevent overlapping overrides on action modification
-        this.submitAction = originalRegistrationAction;
-        this.sanitizeInputs();
-        globalScene.ui.setMode(Mode.LOADING, { buttonActions: []});
-        const onFail = error => {
-          globalScene.ui.setMode(Mode.REGISTRATION_FORM, Object.assign(config, { errorMessage: error?.trim() }));
-          globalScene.ui.playError();
-          const errorMessageFontSize = languageSettings[i18next.resolvedLanguage!]?.errorMessageFontSize;
-          if (errorMessageFontSize) {
-            this.errorMessage.setFontSize(errorMessageFontSize);
+      this.submitAction = _ => {
+        if (globalScene.tweens.getTweensOf(this.modalContainer).length === 0) {
+          // Prevent overlapping overrides on action modification
+          this.submitAction = originalRegistrationAction;
+          this.sanitizeInputs();
+          globalScene.ui.setMode(UiMode.LOADING, { buttonActions: [] });
+          const onFail = error => {
+            globalScene.ui.setMode(UiMode.REGISTRATION_FORM, Object.assign(config, { errorMessage: error?.trim() }));
+            globalScene.ui.playError();
+          };
+          if (!this.inputs[0].text) {
+            return onFail(i18next.t("menu:emptyUsername"));
           }
-        };
-        if (!this.inputs[0].text) {
-          return onFail(i18next.t("menu:emptyUsername"));
+          if (!this.inputs[1].text) {
+            return onFail(this.getReadableErrorMessage("invalid password"));
+          }
+          if (this.inputs[1].text !== this.inputs[2].text) {
+            return onFail(i18next.t("menu:passwordNotMatchingConfirmPassword"));
+          }
+          const [usernameInput, passwordInput] = this.inputs;
+          pokerogueApi.account
+            .register({
+              username: usernameInput.text,
+              password: passwordInput.text,
+            })
+            .then(registerError => {
+              if (!registerError) {
+                pokerogueApi.account
+                  .login({
+                    username: usernameInput.text,
+                    password: passwordInput.text,
+                  })
+                  .then(loginError => {
+                    if (!loginError) {
+                      originalRegistrationAction?.();
+                    } else {
+                      onFail(loginError);
+                    }
+                  });
+              } else {
+                onFail(registerError);
+              }
+            });
         }
-        if (!this.inputs[1].text) {
-          return onFail(this.getReadableErrorMessage("invalid password"));
-        }
-        if (this.inputs[1].text !== this.inputs[2].text) {
-          return onFail(i18next.t("menu:passwordNotMatchingConfirmPassword"));
-        }
-        const [ usernameInput, passwordInput ] = this.inputs;
-        pokerogueApi.account.register({ username: usernameInput.text, password: passwordInput.text })
-          .then(registerError => {
-            if (!registerError) {
-              pokerogueApi.account.login({ username: usernameInput.text, password: passwordInput.text })
-                .then(loginError => {
-                  if (!loginError) {
-                    originalRegistrationAction && originalRegistrationAction();
-                  } else {
-                    onFail(loginError);
-                  }
-                });
-            } else {
-              onFail(registerError);
-            }
-          });
       };
 
       return true;

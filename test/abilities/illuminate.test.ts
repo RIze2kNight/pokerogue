@@ -1,9 +1,9 @@
-import { Stat } from "#app/enums/stat";
-import { Abilities } from "#enums/abilities";
-import { Moves } from "#enums/moves";
-import GameManager from "#test/testUtils/gameManager";
+import { AbilityId } from "#enums/ability-id";
+import { MoveId } from "#enums/move-id";
+import { Stat } from "#enums/stat";
+import { GameManager } from "#test/test-utils/game-manager";
 import Phaser from "phaser";
-import { afterEach, beforeAll, beforeEach, describe, it, expect } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 describe("Abilities - Illuminate", () => {
   let phaserGame: Phaser.Game;
@@ -22,22 +22,22 @@ describe("Abilities - Illuminate", () => {
   beforeEach(() => {
     game = new GameManager(phaserGame);
     game.override
-      .moveset(Moves.SPLASH)
-      .ability(Abilities.ILLUMINATE)
-      .enemyAbility(Abilities.BALL_FETCH)
-      .enemyMoveset(Moves.SAND_ATTACK);
+      .moveset(MoveId.SPLASH)
+      .ability(AbilityId.ILLUMINATE)
+      .enemyAbility(AbilityId.BALL_FETCH)
+      .enemyMoveset(MoveId.SAND_ATTACK);
   });
 
   it("should prevent ACC stat stage from being lowered", async () => {
-    game.override.battleType("single");
+    game.override.battleStyle("single");
 
     await game.classicMode.startBattle();
 
-    const player = game.scene.getPlayerPokemon()!;
+    const player = game.field.getPlayerPokemon();
 
     expect(player.getStatStage(Stat.ACC)).toBe(0);
 
-    game.move.select(Moves.SPLASH);
+    game.move.select(MoveId.SPLASH);
 
     await game.toNextTurn();
 
@@ -45,11 +45,7 @@ describe("Abilities - Illuminate", () => {
   });
 
   it("should guarantee double battle with any one LURE", async () => {
-    game.override
-      .startingModifier([
-        { name: "LURE" },
-      ])
-      .startingWave(2);
+    game.override.startingModifier([{ name: "LURE" }]).startingWave(2);
 
     await game.classicMode.startBattle();
 

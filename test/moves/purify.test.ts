@@ -1,14 +1,13 @@
-import { BattlerIndex } from "#app/battle";
-import { Status } from "#app/data/status-effect";
-import type { EnemyPokemon, PlayerPokemon } from "#app/field/pokemon";
-import { MoveEndPhase } from "#app/phases/move-end-phase";
-import { Moves } from "#enums/moves";
-import { Species } from "#enums/species";
+import { Status } from "#data/status-effect";
+import { BattlerIndex } from "#enums/battler-index";
+import { MoveId } from "#enums/move-id";
+import { SpeciesId } from "#enums/species-id";
 import { StatusEffect } from "#enums/status-effect";
-import GameManager from "#test/testUtils/gameManager";
+import type { EnemyPokemon, PlayerPokemon } from "#field/pokemon";
+import { MoveEndPhase } from "#phases/move-end-phase";
+import { GameManager } from "#test/test-utils/game-manager";
 import Phaser from "phaser";
 import { afterEach, beforeAll, beforeEach, describe, expect, test } from "vitest";
-
 
 describe("Moves - Purify", () => {
   let phaserGame: Phaser.Game;
@@ -26,53 +25,45 @@ describe("Moves - Purify", () => {
 
   beforeEach(() => {
     game = new GameManager(phaserGame);
-    game.override.battleType("single");
-
-    game.override.starterSpecies(Species.PYUKUMUKU);
-    game.override.startingLevel(10);
-    game.override.moveset([ Moves.PURIFY, Moves.SIZZLY_SLIDE ]);
-
-    game.override.enemySpecies(Species.MAGIKARP);
-    game.override.enemyLevel(10);
-    game.override.enemyMoveset([ Moves.SPLASH, Moves.NONE, Moves.NONE, Moves.NONE ]);
+    game.override
+      .battleStyle("single")
+      .starterSpecies(SpeciesId.PYUKUMUKU)
+      .startingLevel(10)
+      .moveset([MoveId.PURIFY, MoveId.SIZZLY_SLIDE])
+      .enemySpecies(SpeciesId.MAGIKARP)
+      .enemyLevel(10)
+      .enemyMoveset([MoveId.SPLASH]);
   });
 
-  test(
-    "Purify heals opponent status effect and restores user hp",
-    async () => {
-      await game.startBattle();
+  test("Purify heals opponent status effect and restores user hp", async () => {
+    await game.classicMode.startBattle();
 
-      const enemyPokemon: EnemyPokemon = game.scene.getEnemyPokemon()!;
-      const playerPokemon: PlayerPokemon = game.scene.getPlayerPokemon()!;
+    const enemyPokemon: EnemyPokemon = game.field.getEnemyPokemon();
+    const playerPokemon: PlayerPokemon = game.field.getPlayerPokemon();
 
-      playerPokemon.hp = playerPokemon.getMaxHp() - 1;
-      enemyPokemon.status = new Status(StatusEffect.BURN);
+    playerPokemon.hp = playerPokemon.getMaxHp() - 1;
+    enemyPokemon.status = new Status(StatusEffect.BURN);
 
-      game.move.select(Moves.PURIFY);
-      await game.setTurnOrder([ BattlerIndex.PLAYER, BattlerIndex.ENEMY ]);
-      await game.phaseInterceptor.to(MoveEndPhase);
+    game.move.select(MoveId.PURIFY);
+    await game.setTurnOrder([BattlerIndex.PLAYER, BattlerIndex.ENEMY]);
+    await game.phaseInterceptor.to(MoveEndPhase);
 
-      expect(enemyPokemon.status).toBeNull();
-      expect(playerPokemon.isFullHp()).toBe(true);
-    },
-  );
+    expect(enemyPokemon.status).toBeNull();
+    expect(playerPokemon.isFullHp()).toBe(true);
+  });
 
-  test(
-    "Purify does not heal if opponent doesnt have any status effect",
-    async () => {
-      await game.startBattle();
+  test("Purify does not heal if opponent doesnt have any status effect", async () => {
+    await game.classicMode.startBattle();
 
-      const playerPokemon: PlayerPokemon = game.scene.getPlayerPokemon()!;
+    const playerPokemon: PlayerPokemon = game.field.getPlayerPokemon();
 
-      playerPokemon.hp = playerPokemon.getMaxHp() - 1;
-      const playerInitialHp = playerPokemon.hp;
+    playerPokemon.hp = playerPokemon.getMaxHp() - 1;
+    const playerInitialHp = playerPokemon.hp;
 
-      game.move.select(Moves.PURIFY);
-      await game.setTurnOrder([ BattlerIndex.PLAYER, BattlerIndex.ENEMY ]);
-      await game.phaseInterceptor.to(MoveEndPhase);
+    game.move.select(MoveId.PURIFY);
+    await game.setTurnOrder([BattlerIndex.PLAYER, BattlerIndex.ENEMY]);
+    await game.phaseInterceptor.to(MoveEndPhase);
 
-      expect(playerPokemon.hp).toBe(playerInitialHp);
-    },
-  );
-
+    expect(playerPokemon.hp).toBe(playerInitialHp);
+  });
 });

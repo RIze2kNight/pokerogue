@@ -1,8 +1,9 @@
 import type { GameMode } from "#app/game-mode";
-import { GameModes, getGameMode } from "#app/game-mode";
+import { getGameMode } from "#app/game-mode";
+import { GameModes } from "#enums/game-modes";
+import { GameManager } from "#test/test-utils/game-manager";
+import * as Utils from "#utils/common";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import * as Utils from "#app/utils";
-import GameManager from "#test/testUtils/gameManager";
 
 describe("game-mode", () => {
   let phaserGame: Phaser.Game;
@@ -14,8 +15,6 @@ describe("game-mode", () => {
   });
   afterEach(() => {
     game.phaseInterceptor.restoreOg();
-    vi.clearAllMocks();
-    vi.resetAllMocks();
   });
   beforeEach(() => {
     game = new GameManager(phaserGame);
@@ -28,9 +27,7 @@ describe("game-mode", () => {
     it("does NOT spawn trainers within 3 waves of fixed battle", () => {
       const { arena } = game.scene;
       /** set wave 16 to be a fixed trainer fight meaning wave 13-19 don't allow trainer spawns */
-      vi.spyOn(classicGameMode, "isFixedBattle").mockImplementation(
-        (n: number) => (n === 16 ? true : false)
-      );
+      vi.spyOn(classicGameMode, "isFixedBattle").mockImplementation((n: number) => n === 16);
       vi.spyOn(arena, "getTrainerChance").mockReturnValue(1);
       vi.spyOn(Utils, "randSeedInt").mockReturnValue(0);
       expect(classicGameMode.isWaveTrainer(11, arena)).toBeFalsy();

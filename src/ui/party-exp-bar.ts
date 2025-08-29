@@ -1,9 +1,10 @@
 import { globalScene } from "#app/global-scene";
-import type Pokemon from "../field/pokemon";
-import { TextStyle, addTextObject } from "./text";
+import { TextStyle } from "#enums/text-style";
+import type { Pokemon } from "#field/pokemon";
+import { addTextObject } from "#ui/text";
 import i18next from "i18next";
 
-export default class PartyExpBar extends Phaser.GameObjects.Container {
+export class PartyExpBar extends Phaser.GameObjects.Container {
   private bg: Phaser.GameObjects.NineSlice;
   private pokemonIcon: Phaser.GameObjects.Container;
   private expText: Phaser.GameObjects.Text;
@@ -13,7 +14,7 @@ export default class PartyExpBar extends Phaser.GameObjects.Container {
   public shown: boolean;
 
   constructor() {
-    super(globalScene, (globalScene.game.canvas.width / 6), -((globalScene.game.canvas.height) / 6) + 15);
+    super(globalScene, globalScene.scaledCanvas.width, -globalScene.scaledCanvas.height + 15);
   }
 
   setup(): void {
@@ -43,9 +44,11 @@ export default class PartyExpBar extends Phaser.GameObjects.Container {
 
       // if we want to only display the level in the small frame
       if (showOnlyLevelUp) {
-        if (newLevel > 200) { // if the level is greater than 200, we only display Lv. UP
+        if (newLevel > 200) {
+          // if the level is greater than 200, we only display Lv. UP
           this.expText.setText(i18next.t("battleScene:levelUp"));
-        } else { // otherwise we display Lv. Up and the new level
+        } else {
+          // otherwise we display Lv. Up and the new level
           this.expText.setText(i18next.t("battleScene:levelUpWithLevel", { level: newLevel }));
         }
       } else {
@@ -63,13 +66,13 @@ export default class PartyExpBar extends Phaser.GameObjects.Container {
 
       this.tween = globalScene.tweens.add({
         targets: this,
-        x: (globalScene.game.canvas.width / 6) - (this.bg.width - 5),
+        x: globalScene.scaledCanvas.width - (this.bg.width - 5),
         duration: 500 / Math.pow(2, globalScene.expGainsSpeed),
         ease: "Sine.easeOut",
         onComplete: () => {
           this.tween = null;
           resolve();
-        }
+        },
       });
 
       this.setVisible(true);
@@ -89,7 +92,7 @@ export default class PartyExpBar extends Phaser.GameObjects.Container {
 
       this.tween = globalScene.tweens.add({
         targets: this,
-        x: (globalScene.game.canvas.width / 6),
+        x: globalScene.scaledCanvas.width,
         duration: 500,
         ease: "Sine.easeIn",
         onComplete: () => {
@@ -98,7 +101,7 @@ export default class PartyExpBar extends Phaser.GameObjects.Container {
           this.setVisible(false);
           this.pokemonIcon?.destroy();
           resolve();
-        }
+        },
       });
     });
   }

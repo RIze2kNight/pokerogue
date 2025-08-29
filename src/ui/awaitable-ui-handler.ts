@@ -1,15 +1,15 @@
-import type { Mode } from "./ui";
-import UiHandler from "./ui-handler";
-import { Button } from "#enums/buttons";
 import { globalScene } from "#app/global-scene";
+import { Button } from "#enums/buttons";
+import type { UiMode } from "#enums/ui-mode";
+import { UiHandler } from "#ui/ui-handler";
 
-export default abstract class AwaitableUiHandler extends UiHandler {
+export abstract class AwaitableUiHandler extends UiHandler {
   protected awaitingActionInput: boolean;
   protected onActionInput: Function | null;
-  public tutorialActive: boolean = false;
+  public tutorialActive = false;
   public tutorialOverlay: Phaser.GameObjects.Rectangle;
 
-  constructor(mode: Mode | null = null) {
+  constructor(mode: UiMode | null = null) {
     super(mode);
   }
 
@@ -32,7 +32,14 @@ export default abstract class AwaitableUiHandler extends UiHandler {
    */
   initTutorialOverlay(container: Phaser.GameObjects.Container) {
     if (!this.tutorialOverlay) {
-      this.tutorialOverlay = new Phaser.GameObjects.Rectangle(globalScene, -1, -1, globalScene.scaledCanvas.width, globalScene.scaledCanvas.height, 0x070707);
+      this.tutorialOverlay = new Phaser.GameObjects.Rectangle(
+        globalScene,
+        -1,
+        -1,
+        globalScene.scaledCanvas.width,
+        globalScene.scaledCanvas.height,
+        0x070707,
+      );
       this.tutorialOverlay.setName("tutorial-overlay");
       this.tutorialOverlay.setOrigin(0, 0);
       this.tutorialOverlay.setAlpha(0);

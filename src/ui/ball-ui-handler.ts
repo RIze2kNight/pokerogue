@@ -1,24 +1,26 @@
-import { getPokeballName } from "../data/pokeball";
-import { addTextObject, getTextStyleOptions, TextStyle } from "./text";
-import { Command } from "./command-ui-handler";
-import { Mode } from "./ui";
-import UiHandler from "./ui-handler";
-import { addWindow } from "./ui-theme";
-import { Button } from "#enums/buttons";
-import type { CommandPhase } from "#app/phases/command-phase";
 import { globalScene } from "#app/global-scene";
+import { getPokeballName } from "#data/pokeball";
+import { Button } from "#enums/buttons";
+import { Command } from "#enums/command";
+import { TextStyle } from "#enums/text-style";
+import { UiMode } from "#enums/ui-mode";
+import type { CommandPhase } from "#phases/command-phase";
+import { addTextObject, getTextStyleOptions } from "#ui/text";
+import { UiHandler } from "#ui/ui-handler";
+import { addWindow } from "#ui/ui-theme";
+import i18next from "i18next";
 
-export default class BallUiHandler extends UiHandler {
+export class BallUiHandler extends UiHandler {
   private pokeballSelectContainer: Phaser.GameObjects.Container;
   private pokeballSelectBg: Phaser.GameObjects.NineSlice;
   private countsText: Phaser.GameObjects.Text;
 
   private cursorObj: Phaser.GameObjects.Image | null;
 
-  private scale: number = 0.1666666667;
+  private scale = 0.1666666667;
 
   constructor() {
-    super(Mode.BALL);
+    super(UiMode.BALL);
   }
 
   setup() {
@@ -31,10 +33,13 @@ export default class BallUiHandler extends UiHandler {
     for (let pb = 0; pb < Object.keys(globalScene.pokeballCounts).length; pb++) {
       optionsTextContent += `${getPokeballName(pb)}\n`;
     }
-    optionsTextContent += "Cancel";
+    optionsTextContent += i18next.t("commandUiHandler:ballCancel");
     const optionsText = addTextObject(0, 0, optionsTextContent, TextStyle.WINDOW, { align: "right", maxLines: 6 });
     const optionsTextWidth = optionsText.displayWidth;
-    this.pokeballSelectContainer = globalScene.add.container((globalScene.game.canvas.width / 6) - 51 - Math.max(64, optionsTextWidth), -49);
+    this.pokeballSelectContainer = globalScene.add.container(
+      globalScene.scaledCanvas.width - 51 - Math.max(64, optionsTextWidth),
+      -49,
+    );
     this.pokeballSelectContainer.setVisible(false);
     ui.add(this.pokeballSelectContainer);
 
@@ -46,7 +51,9 @@ export default class BallUiHandler extends UiHandler {
     optionsText.setPositionRelative(this.pokeballSelectBg, 42, 9);
     optionsText.setLineSpacing(this.scale * 72);
 
-    this.countsText = addTextObject(0, 0, "", TextStyle.WINDOW, { maxLines: 5 });
+    this.countsText = addTextObject(0, 0, "", TextStyle.WINDOW, {
+      maxLines: 5,
+    });
     this.countsText.setPositionRelative(this.pokeballSelectBg, 18, 9);
     this.countsText.setLineSpacing(this.scale * 72);
     this.pokeballSelectContainer.add(this.countsText);
@@ -72,20 +79,20 @@ export default class BallUiHandler extends UiHandler {
     const pokeballTypeCount = Object.keys(globalScene.pokeballCounts).length;
 
     if (button === Button.ACTION || button === Button.CANCEL) {
-      const commandPhase = globalScene.getCurrentPhase() as CommandPhase;
+      const commandPhase = globalScene.phaseManager.getCurrentPhase() as CommandPhase;
       success = true;
       if (button === Button.ACTION && this.cursor < pokeballTypeCount) {
         if (globalScene.pokeballCounts[this.cursor]) {
           if (commandPhase.handleCommand(Command.BALL, this.cursor)) {
-            globalScene.ui.setMode(Mode.COMMAND, commandPhase.getFieldIndex());
-            globalScene.ui.setMode(Mode.MESSAGE);
+            globalScene.ui.setMode(UiMode.COMMAND, commandPhase.getFieldIndex());
+            globalScene.ui.setMode(UiMode.MESSAGE);
             success = true;
           }
         } else {
           ui.playError();
         }
       } else {
-        ui.setMode(Mode.COMMAND, commandPhase.getFieldIndex());
+        ui.setMode(UiMode.COMMAND, commandPhase.getFieldIndex());
         success = true;
       }
     } else {
@@ -107,7 +114,11 @@ export default class BallUiHandler extends UiHandler {
   }
 
   updateCounts() {
-    this.countsText.setText(Object.values(globalScene.pokeballCounts).map(c => `x${c}`).join("\n"));
+    this.countsText.setText(
+      Object.values(globalScene.pokeballCounts)
+        .map(c => `×${c}`)
+        .join("\n"),
+    );
   }
 
   setCursor(cursor: number): boolean {

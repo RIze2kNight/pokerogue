@@ -24,9 +24,10 @@
 - Pokémon Sword/Shield
 - Pokémon Legends: Arceus
 - Pokémon Scarlet/Violet
-- Firel (Custom Graveyard, Ice Cave, Laboratory, Metropolis, Plains, Power Plant, Seabed, Space, and Volcano biome music)
+- Firel (Custom Graveyard, Ice Cave, Laboratory, Metropolis, Plains, Power Plant, Seabed, Space, Volcano, and Desert biome music)
 - Lmz (Custom Ancient Ruins, Jungle, and Lake biome music)
-- Andr06 (Custom Forest, Slum and Sea biome music)
+- Andr06 (Custom Forest, Slum, Sea, and Fairy Cave biome music)
+- Leavannite (Custom Wasteland biome music)
 - _tresnoir
 - unveiler
 
@@ -40,6 +41,7 @@
 ## Backgrounds
 - Squip (Paid Commissions)
 - Contributions by Someonealive-QN
+- Contributions by redactedinlight
 
 ## UI
 - GAMEFREAK
@@ -364,11 +366,13 @@ In addition to the lists below, please check [the PokéRogue wiki](https://wiki.
 - Opaquer
 - OrangeRed
 - Sam aka Flashfyre (initial developer, started PokéRogue)
+- SirzBenjie
 - sirzento
 - SN34KZ
 - Swain aka torranx
 - Temp aka Tempo-anon
 - Walker
+- Wlowscha (aka Curbio)
 - Xavion
 
 ## Bug/Issue Managers

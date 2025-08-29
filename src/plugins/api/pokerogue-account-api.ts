@@ -1,12 +1,13 @@
+import { ApiBase } from "#api/api-base";
+import { SESSION_ID_COOKIE_NAME } from "#app/constants";
 import type {
+  AccountChangePwRequest,
   AccountInfoResponse,
   AccountLoginRequest,
   AccountLoginResponse,
   AccountRegisterRequest,
-} from "#app/@types/PokerogueAccountApi";
-import { SESSION_ID_COOKIE_NAME } from "#app/constants";
-import { ApiBase } from "#app/plugins/api/api-base";
-import { removeCookie, setCookie } from "#app/utils";
+} from "#types/api/pokerogue-account-api";
+import { removeCookie, setCookie } from "#utils/cookies";
 
 /**
  * A wrapper for PokéRogue account API requests.
@@ -24,14 +25,13 @@ export class PokerogueAccountApi extends ApiBase {
 
       if (response.ok) {
         const resData = (await response.json()) as AccountInfoResponse;
-        return [ resData, response.status ];
-      } else {
-        console.warn("Could not get account info!", response.status, response.statusText);
-        return [ null, response.status ];
+        return [resData, response.status];
       }
+      console.warn("Could not get account info!", response.status, response.statusText);
+      return [null, response.status];
     } catch (err) {
       console.warn("Could not get account info!", err);
-      return [ null, 500 ];
+      return [null, 500];
     }
   }
 
@@ -46,9 +46,8 @@ export class PokerogueAccountApi extends ApiBase {
 
       if (response.ok) {
         return null;
-      } else {
-        return response.text();
       }
+      return response.text();
     } catch (err) {
       console.warn("Register failed!", err);
     }
@@ -70,10 +69,9 @@ export class PokerogueAccountApi extends ApiBase {
         const loginResponse = (await response.json()) as AccountLoginResponse;
         setCookie(SESSION_ID_COOKIE_NAME, loginResponse.token);
         return null;
-      } else {
-        console.warn("Login failed!", response.status, response.statusText);
-        return response.text();
       }
+      console.warn("Login failed!", response.status, response.statusText);
+      return response.text();
     } catch (err) {
       console.warn("Login failed!", err);
     }
@@ -97,5 +95,20 @@ export class PokerogueAccountApi extends ApiBase {
     }
 
     removeCookie(SESSION_ID_COOKIE_NAME); // we are always clearing the cookie.
+  }
+
+  public async changePassword(changePwData: AccountChangePwRequest) {
+    try {
+      const response = await this.doPost("/account/changepw", changePwData, "form-urlencoded");
+      if (response.ok) {
+        return null;
+      }
+      console.warn("Change password failed!", response.status, response.statusText);
+      return response.text();
+    } catch (err) {
+      console.warn("Change password failed!", err);
+    }
+
+    return "Unknown error!";
   }
 }

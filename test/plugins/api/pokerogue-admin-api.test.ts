@@ -1,3 +1,6 @@
+import { PokerogueAdminApi } from "#api/pokerogue-admin-api";
+import { initServerForApiTests } from "#test/test-utils/test-file-initialization";
+import { getApiBaseUrl } from "#test/test-utils/test-utils";
 import type {
   LinkAccountToDiscordIdRequest,
   LinkAccountToGoogledIdRequest,
@@ -5,15 +8,18 @@ import type {
   SearchAccountResponse,
   UnlinkAccountFromDiscordIdRequest,
   UnlinkAccountFromGoogledIdRequest,
-} from "#app/@types/PokerogueAdminApi";
-import { PokerogueAdminApi } from "#app/plugins/api/pokerogue-admin-api";
-import { getApiBaseUrl } from "#test/testUtils/testUtils";
-import { http, HttpResponse } from "msw";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+} from "#types/api/pokerogue-admin-api";
+import { HttpResponse, http } from "msw";
+import type { SetupServerApi } from "msw/node";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiBase = getApiBaseUrl();
 const adminApi = new PokerogueAdminApi(apiBase);
-const { server } = global;
+let server: SetupServerApi;
+
+beforeAll(async () => {
+  server = await initServerForApiTests();
+});
 
 afterEach(() => {
   server.resetHandlers();
@@ -25,7 +31,10 @@ describe("Pokerogue Admin API", () => {
   });
 
   describe("Link Account to Discord", () => {
-    const params: LinkAccountToDiscordIdRequest = { username: "test", discordId: "test-12575756" };
+    const params: LinkAccountToDiscordIdRequest = {
+      username: "test",
+      discordId: "test-12575756",
+    };
 
     it("should return null on SUCCESS", async () => {
       server.use(http.post(`${apiBase}/admin/account/discordLink`, () => HttpResponse.json(true)));
@@ -64,7 +73,10 @@ describe("Pokerogue Admin API", () => {
   });
 
   describe("Unlink Account from Discord", () => {
-    const params: UnlinkAccountFromDiscordIdRequest = { username: "test", discordId: "test-12575756" };
+    const params: UnlinkAccountFromDiscordIdRequest = {
+      username: "test",
+      discordId: "test-12575756",
+    };
 
     it("should return null on SUCCESS", async () => {
       server.use(http.post(`${apiBase}/admin/account/discordUnlink`, () => HttpResponse.json(true)));
@@ -103,7 +115,10 @@ describe("Pokerogue Admin API", () => {
   });
 
   describe("Link Account to Google", () => {
-    const params: LinkAccountToGoogledIdRequest = { username: "test", googleId: "test-12575756" };
+    const params: LinkAccountToGoogledIdRequest = {
+      username: "test",
+      googleId: "test-12575756",
+    };
 
     it("should return null on SUCCESS", async () => {
       server.use(http.post(`${apiBase}/admin/account/googleLink`, () => HttpResponse.json(true)));
@@ -142,7 +157,10 @@ describe("Pokerogue Admin API", () => {
   });
 
   describe("Unlink Account from Google", () => {
-    const params: UnlinkAccountFromGoogledIdRequest = { username: "test", googleId: "test-12575756" };
+    const params: UnlinkAccountFromGoogledIdRequest = {
+      username: "test",
+      googleId: "test-12575756",
+    };
 
     it("should return null on SUCCESS", async () => {
       server.use(http.post(`${apiBase}/admin/account/googleUnlink`, () => HttpResponse.json(true)));
@@ -193,7 +211,7 @@ describe("Pokerogue Admin API", () => {
       };
       server.use(http.get(`${apiBase}/admin/account/adminSearch`, () => HttpResponse.json(responseData)));
 
-      const [ data, err ] = await adminApi.searchAccount(params);
+      const [data, err] = await adminApi.searchAccount(params);
 
       expect(data).toStrictEqual(responseData);
       expect(err).toBeUndefined();
@@ -202,7 +220,7 @@ describe("Pokerogue Admin API", () => {
     it("should return [undefined, ERR_GENERIC] and report a warning on on FAILURE", async () => {
       server.use(http.get(`${apiBase}/admin/account/adminSearch`, () => new HttpResponse("", { status: 400 })));
 
-      const [ data, err ] = await adminApi.searchAccount(params);
+      const [data, err] = await adminApi.searchAccount(params);
 
       expect(data).toBeUndefined();
       expect(err).toBe(adminApi.ERR_GENERIC);
@@ -212,7 +230,7 @@ describe("Pokerogue Admin API", () => {
     it("should return [undefined, ERR_USERNAME_NOT_FOUND] and report a warning on on 404", async () => {
       server.use(http.get(`${apiBase}/admin/account/adminSearch`, () => new HttpResponse("", { status: 404 })));
 
-      const [ data, err ] = await adminApi.searchAccount(params);
+      const [data, err] = await adminApi.searchAccount(params);
 
       expect(data).toBeUndefined();
       expect(err).toBe(adminApi.ERR_USERNAME_NOT_FOUND);
@@ -222,7 +240,7 @@ describe("Pokerogue Admin API", () => {
     it("should return [undefined, ERR_GENERIC] and report a warning on on ERROR", async () => {
       server.use(http.get(`${apiBase}/admin/account/adminSearch`, () => HttpResponse.error()));
 
-      const [ data, err ] = await adminApi.searchAccount(params);
+      const [data, err] = await adminApi.searchAccount(params);
 
       expect(data).toBeUndefined();
       expect(err).toBe(adminApi.ERR_GENERIC);

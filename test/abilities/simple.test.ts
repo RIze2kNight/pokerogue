@@ -1,8 +1,8 @@
-import { Moves } from "#app/enums/moves";
-import { Abilities } from "#enums/abilities";
-import { Species } from "#enums/species";
+import { AbilityId } from "#enums/ability-id";
+import { MoveId } from "#enums/move-id";
+import { SpeciesId } from "#enums/species-id";
 import { Stat } from "#enums/stat";
-import GameManager from "#test/testUtils/gameManager";
+import { GameManager } from "#test/test-utils/game-manager";
 import Phaser from "phaser";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
@@ -23,20 +23,18 @@ describe("Abilities - Simple", () => {
   beforeEach(() => {
     game = new GameManager(phaserGame);
     game.override
-      .battleType("single")
-      .enemySpecies(Species.BULBASAUR)
-      .enemyAbility(Abilities.SIMPLE)
-      .ability(Abilities.INTIMIDATE)
-      .enemyMoveset(Moves.SPLASH);
+      .battleStyle("single")
+      .enemySpecies(SpeciesId.BULBASAUR)
+      .enemyAbility(AbilityId.SIMPLE)
+      .ability(AbilityId.INTIMIDATE)
+      .enemyMoveset(MoveId.SPLASH);
   });
 
-  it("should double stat changes when applied", async() => {
-    await game.startBattle([
-      Species.SLOWBRO
-    ]);
+  it("should double stat changes when applied", async () => {
+    await game.classicMode.startBattle([SpeciesId.SLOWBRO]);
 
-    const enemyPokemon = game.scene.getEnemyPokemon()!;
+    const enemyPokemon = game.field.getEnemyPokemon();
 
     expect(enemyPokemon.getStatStage(Stat.ATK)).toBe(-2);
-  }, 20000);
+  });
 });

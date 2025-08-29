@@ -1,25 +1,16 @@
-import { GachaType } from "#enums/gacha-types";
-import { getBiomeHasProps } from "#app/field/arena";
-import CacheBustedLoaderPlugin from "#app/plugins/cache-busted-loader-plugin";
+import { timedEventManager } from "#app/global-event-manager";
+import { initializeGame } from "#app/init/init";
 import { SceneBase } from "#app/scene-base";
-import { WindowVariant, getWindowVariantSuffix } from "#app/ui/ui-theme";
 import { isMobile } from "#app/touch-controls";
-import * as Utils from "#app/utils";
-import { initPokemonPrevolutions, initPokemonStarters } from "#app/data/balance/pokemon-evolutions";
-import { initBiomes } from "#app/data/balance/biomes";
-import { initEggMoves } from "#app/data/balance/egg-moves";
-import { initPokemonForms } from "#app/data/pokemon-forms";
-import { initSpecies } from "#app/data/pokemon-species";
-import { initMoves } from "#app/data/move";
-import { initAbilities } from "#app/data/ability";
-import { initAchievements } from "#app/system/achv";
-import { initTrainerTypeDialogue } from "#app/data/dialogue";
-import { initChallenges } from "#app/data/challenge";
+import { BiomeId } from "#enums/biome-id";
+import { GachaType } from "#enums/gacha-types";
+import { getBiomeHasProps } from "#field/arena";
+import { CacheBustedLoaderPlugin } from "#plugins/cache-busted-loader-plugin";
+import { getWindowVariantSuffix, WindowVariant } from "#ui/ui-theme";
+import { hasAllLocalizedSprites, localPing } from "#utils/common";
+import { getEnumValues } from "#utils/enums";
 import i18next from "i18next";
-import { initStatsKeys } from "#app/ui/game-stats-ui-handler";
-import { initVouchers } from "#app/system/voucher";
-import { Biome } from "#enums/biome";
-import { initMysteryEncounters } from "#app/data/mystery-encounters/mystery-encounters";
+import type { GameObjects } from "phaser";
 
 export class LoadingScene extends SceneBase {
   public static readonly KEY = "loading";
@@ -33,11 +24,12 @@ export class LoadingScene extends SceneBase {
   }
 
   preload() {
-    Utils.localPing();
+    localPing();
     this.load["manifest"] = this.game["manifest"];
 
     this.loadImage("loading_bg", "arenas");
     this.loadImage("logo", "");
+    this.loadImage("logo_fake", "");
 
     // Load menu images
     this.loadAtlas("bg", "ui");
@@ -48,7 +40,7 @@ export class LoadingScene extends SceneBase {
     this.loadImage("friendship_overlay", "ui");
     this.loadImage("cursor", "ui");
     this.loadImage("cursor_reverse", "ui");
-    for (const wv of Utils.getEnumValues(WindowVariant)) {
+    for (const wv of getEnumValues(WindowVariant)) {
       for (let w = 1; w <= 5; w++) {
         this.loadImage(`window_${w}${getWindowVariantSuffix(wv)}`, "ui/windows");
       }
@@ -79,6 +71,7 @@ export class LoadingScene extends SceneBase {
     this.loadImage("icon_owned", "ui");
     this.loadImage("icon_egg_move", "ui");
     this.loadImage("ability_bar_left", "ui");
+    this.loadImage("ability_bar_right", "ui");
     this.loadImage("bgm_bar", "ui");
     this.loadImage("party_exp_bar", "ui");
     this.loadImage("achv_bar", "ui");
@@ -97,6 +90,7 @@ export class LoadingScene extends SceneBase {
     this.loadAtlas("shiny_icons", "ui");
     this.loadImage("ha_capsule", "ui", "ha_capsule.png");
     this.loadImage("champion_ribbon", "ui", "champion_ribbon.png");
+    this.loadImage("champion_ribbon_emerald", "ui", "champion_ribbon_emerald.png");
     this.loadImage("icon_spliced", "ui");
     this.loadImage("icon_lock", "ui", "icon_lock.png");
     this.loadImage("icon_stop", "ui", "icon_stop.png");
@@ -105,7 +99,7 @@ export class LoadingScene extends SceneBase {
     this.loadImage("type_tera", "ui");
     this.loadAtlas("type_bgs", "ui");
     this.loadAtlas("button_tera", "ui");
-    this.loadImage("mystery_egg", "ui");
+    this.loadImage("common_egg", "ui");
     this.loadImage("normal_memory", "ui");
 
     this.loadImage("dawn_icon_fg", "ui");
@@ -127,21 +121,25 @@ export class LoadingScene extends SceneBase {
 
     this.loadImage("party_bg", "ui");
     this.loadImage("party_bg_double", "ui");
+    this.loadImage("party_bg_double_manage", "ui");
     this.loadAtlas("party_slot_main", "ui");
+    this.loadAtlas("party_slot_main_short", "ui");
     this.loadAtlas("party_slot", "ui");
     this.loadImage("party_slot_overlay_lv", "ui");
     this.loadImage("party_slot_hp_bar", "ui");
     this.loadAtlas("party_slot_hp_overlay", "ui");
     this.loadAtlas("party_pb", "ui");
     this.loadAtlas("party_cancel", "ui");
+    this.loadAtlas("party_discard", "ui");
+    this.loadAtlas("party_transfer", "ui");
 
     this.loadImage("summary_bg", "ui");
     this.loadImage("summary_overlay_shiny", "ui");
     this.loadImage("summary_profile", "ui");
-    this.loadImage("summary_profile_prompt_z", "ui");      // The pixel Z button prompt
-    this.loadImage("summary_profile_prompt_a", "ui");     // The pixel A button prompt
-    this.loadImage("summary_profile_ability", "ui");      // Pixel text 'ABILITY'
-    this.loadImage("summary_profile_passive", "ui");      // Pixel text 'PASSIVE'
+    this.loadImage("summary_profile_prompt_z", "ui"); // The pixel Z button prompt
+    this.loadImage("summary_profile_prompt_a", "ui"); // The pixel A button prompt
+    this.loadImage("summary_profile_ability", "ui"); // Pixel text 'ABILITY'
+    this.loadImage("summary_profile_passive", "ui"); // Pixel text 'PASSIVE'
     this.loadImage("summary_status", "ui");
     this.loadImage("summary_stats", "ui");
     this.loadImage("summary_stats_overlay_exp", "ui");
@@ -175,8 +173,8 @@ export class LoadingScene extends SceneBase {
 
     this.loadImage("default_bg", "arenas");
     // Load arena images
-    Utils.getEnumValues(Biome).map(bt => {
-      const btKey = Biome[bt].toLowerCase();
+    getEnumValues(BiomeId).map(bt => {
+      const btKey = BiomeId[bt].toLowerCase();
       const isBaseAnimated = btKey === "end";
       const baseAKey = `${btKey}_a`;
       const baseBKey = `${btKey}_b`;
@@ -193,7 +191,7 @@ export class LoadingScene extends SceneBase {
       }
       if (getBiomeHasProps(bt)) {
         for (let p = 1; p <= 3; p++) {
-          const isPropAnimated = p === 3 && [ "power_plant", "end" ].find(b => b === btKey);
+          const isPropAnimated = p === 3 && ["power_plant", "end"].find(b => b === btKey);
           const propKey = `${btKey}_b_${p}`;
           if (!isPropAnimated) {
             this.loadImage(propKey, "arenas");
@@ -237,7 +235,7 @@ export class LoadingScene extends SceneBase {
     // Get current lang and load the types atlas for it. English will only load types while all other languages will load types and types_<lang>
     const lang = i18next.resolvedLanguage;
     if (lang !== "en") {
-      if (Utils.hasAllLocalizedSprites(lang)) {
+      if (hasAllLocalizedSprites(lang)) {
         this.loadAtlas(`statuses_${lang}`, "");
         this.loadAtlas(`types_${lang}`, "");
       } else {
@@ -249,11 +247,13 @@ export class LoadingScene extends SceneBase {
       this.loadAtlas("statuses", "");
       this.loadAtlas("types", "");
     }
-    const availableLangs = [ "en", "de", "it", "fr", "ja", "ko", "es-ES", "pt-BR", "zh-CN" ];
-    if (lang && availableLangs.includes(lang)) {
-      this.loadImage("pkmnday2025event-" + lang, "events");
-    } else {
-      this.loadImage("pkmnday2025event-en", "events");
+    if (timedEventManager.activeEventHasBanner()) {
+      const availableLangs = timedEventManager.getEventBannerLangs();
+      if (lang && availableLangs.includes(lang)) {
+        this.loadImage(`${timedEventManager.getEventBannerFilename()}-${lang}`, "events");
+      } else {
+        this.loadImage(`${timedEventManager.getEventBannerFilename()}-en`, "events");
+      }
     }
 
     this.loadAtlas("statuses", "");
@@ -264,11 +264,11 @@ export class LoadingScene extends SceneBase {
     this.loadAtlas("egg_icons", "egg");
     this.loadAtlas("egg_shard", "egg");
     this.loadAtlas("egg_lightrays", "egg");
-    Utils.getEnumKeys(GachaType).forEach(gt => {
+    for (const gt of Object.keys(GachaType)) {
       const key = gt.toLowerCase();
       this.loadImage(`gacha_${key}`, "egg");
       this.loadAtlas(`gacha_underlay_${key}`, "egg");
-    });
+    }
     this.loadImage("gacha_glass", "egg");
     this.loadImage("gacha_eggs", "egg");
     this.loadAtlas("gacha_hatch", "egg");
@@ -351,30 +351,19 @@ export class LoadingScene extends SceneBase {
     this.loadBgm("evolution", "bw/evolution.mp3");
     this.loadBgm("evolution_fanfare", "bw/evolution_fanfare.mp3");
 
-    this.load.plugin("rextexteditplugin", "https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rextexteditplugin.min.js", true);
+    this.load.plugin(
+      "rextexteditplugin",
+      "https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rextexteditplugin.min.js",
+      true,
+    );
 
     this.loadLoadingScreen();
 
-    initAchievements();
-    initVouchers();
-    initStatsKeys();
-    initPokemonPrevolutions();
-    initPokemonStarters();
-    initBiomes();
-    initEggMoves();
-    initPokemonForms();
-    initTrainerTypeDialogue();
-    initSpecies();
-    initMoves();
-    initAbilities();
-    initChallenges();
-    initMysteryEncounters();
+    initializeGame();
   }
 
   loadLoadingScreen() {
     const mobile = isMobile();
-
-    const loadingGraphics: any[] = [];
 
     const bg = this.add.image(0, 0, "");
     bg.setOrigin(0, 0);
@@ -441,15 +430,28 @@ export class LoadingScene extends SceneBase {
       style: {
         font: "48px emerald",
         color: "#ffffff",
-        align: "center"
+        align: "center",
       },
     });
     disclaimerDescriptionText.setOrigin(0.5, 0.5);
 
-    loadingGraphics.push(bg, graphics, progressBar, progressBox, logo, percentText, assetText, disclaimerText, disclaimerDescriptionText);
+    const loadingGraphics: (GameObjects.Image | GameObjects.Graphics | GameObjects.Text)[] = [];
+    loadingGraphics.push(
+      bg,
+      graphics,
+      progressBar,
+      progressBox,
+      logo,
+      percentText,
+      assetText,
+      disclaimerText,
+      disclaimerDescriptionText,
+    );
 
     if (!mobile) {
-      loadingGraphics.map(g => g.setVisible(false));
+      loadingGraphics.forEach(g => {
+        g.setVisible(false);
+      });
     }
 
     const intro = this.add.video(0, 0);
@@ -461,7 +463,9 @@ export class LoadingScene extends SceneBase {
         ease: "Sine.easeIn",
         onComplete: () => video.destroy(),
       });
-      loadingGraphics.forEach(g => g.setVisible(true));
+      for (const g of loadingGraphics) {
+        g.setVisible(true);
+      }
     });
     intro.setOrigin(0, 0);
     intro.setScale(3);
@@ -502,7 +506,9 @@ export class LoadingScene extends SceneBase {
     });
 
     this.load.on(this.LOAD_EVENTS.COMPLETE, () => {
-      loadingGraphics.forEach(go => go.destroy());
+      for (const go of loadingGraphics) {
+        go.destroy();
+      }
       intro.destroy();
     });
   }

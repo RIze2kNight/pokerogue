@@ -1,11 +1,8 @@
 import { globalScene } from "#app/global-scene";
-import { BattlePhase } from "./battle-phase";
+import { BattlePhase } from "#phases/battle-phase";
 
 export class HidePartyExpBarPhase extends BattlePhase {
-  constructor() {
-    super();
-  }
-
+  public readonly phaseName = "HidePartyExpBarPhase";
   start() {
     super.start();
 

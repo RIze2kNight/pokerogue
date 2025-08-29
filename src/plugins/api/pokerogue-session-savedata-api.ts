@@ -1,3 +1,5 @@
+import { ApiBase } from "#api/api-base";
+import type { SessionSaveData } from "#system/game-data";
 import type {
   ClearSessionSavedataRequest,
   ClearSessionSavedataResponse,
@@ -5,9 +7,7 @@ import type {
   GetSessionSavedataRequest,
   NewClearSessionSavedataRequest,
   UpdateSessionSavedataRequest,
-} from "#app/@types/PokerogueSessionSavedataApi";
-import { ApiBase } from "#app/plugins/api/api-base";
-import type { SessionSaveData } from "#app/system/game-data";
+} from "#types/api/pokerogue-session-save-data-api";
 
 /**
  * A wrapper for PokéRogue session savedata API requests.
@@ -20,17 +20,20 @@ export class PokerogueSessionSavedataApi extends ApiBase {
    * *This is **NOT** the same as {@linkcode clear | clear()}.*
    * @param params The {@linkcode NewClearSessionSavedataRequest} to send
    * @returns The raw savedata as `string`.
+   * @throws Error if the request fails
    */
   public async newclear(params: NewClearSessionSavedataRequest) {
     try {
       const urlSearchParams = this.toUrlSearchParams(params);
       const response = await this.doGet(`/savedata/session/newclear?${urlSearchParams}`);
       const json = await response.json();
-
-      return Boolean(json);
+      if (response.ok) {
+        return Boolean(json);
+      }
+      throw new Error("Could not newclear session!");
     } catch (err) {
       console.warn("Could not newclear session!", err);
-      return false;
+      throw new Error("Could not newclear session!");
     }
   }
 
@@ -53,15 +56,15 @@ export class PokerogueSessionSavedataApi extends ApiBase {
 
   /**
    * Update a session savedata.
-   * @param params The {@linkcode UpdateSessionSavedataRequest} to send
-   * @param rawSavedata The raw savedata (as `string`)
+   * @param params - The request to send
+   * @param rawSavedata - The raw, unencrypted savedata
    * @returns An error message if something went wrong
    */
-  public async update(params: UpdateSessionSavedataRequest, rawSavedata: string) {
+  public async update(params: UpdateSessionSavedataRequest, rawSavedata: string): Promise<string> {
     try {
       const urlSearchParams = this.toUrlSearchParams(params);
-      const response = await this.doPost(`/savedata/session/update?${urlSearchParams}`, rawSavedata);
 
+      const response = await this.doPost(`/savedata/session/update?${urlSearchParams}`, rawSavedata);
       return await response.text();
     } catch (err) {
       console.warn("Could not update session savedata!", err);
@@ -82,9 +85,8 @@ export class PokerogueSessionSavedataApi extends ApiBase {
 
       if (response.ok) {
         return null;
-      } else {
-        return await response.text();
       }
+      return await response.text();
     } catch (err) {
       console.warn("Could not delete session savedata!", err);
       return "Unknown error";
